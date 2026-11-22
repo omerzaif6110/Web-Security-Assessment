@@ -10,10 +10,14 @@
 Faz 1 — Lab kurulumu:
 1. ~~Docker kurulumu~~ ✅
 2. ~~Juice Shop + nginx (`lab/docker-compose.yml`)~~ ✅ — `cd lab && docker compose up -d`
-3. **Wazuh single-node v4.14.10** kurulacak. Önce karar: varsayılan parolalar değiştirilsin mi?
-   (Öneri: değiştir; parolayı kullanıcı terminalde girer, dosyalar .gitignore'da.)
-4. nginx `lab/logs/nginx/access.log` → Wazuh manager'a localfile olarak bağlanacak, test alarmı üretilecek.
-5. Wazuh ağını SCOPE.md'ye ekle.
+3. ~~Wazuh single-node v4.14.10 kurulumu ve başlatma~~ ✅ (konteynerler ayakta, portlar loopback'te)
+4. **Sıradaki (bir sonraki oturum):**
+   - Lab'ı başlat: `cd lab && docker compose up -d` ve `lab/wazuh/wazuh.sh up -d` (VM yeniden başladıysa).
+     Not: Wazuh konteynerleri `restart: always`, lab `unless-stopped`; Docker açılışta başlıyorsa kendileri kalkar.
+   - Dashboard'a gir: https://127.0.0.1 (self-signed sertifika uyarısı beklenir), sağlık kontrolü.
+   - `wazuh-logtest` ile nginx satırının decoder'ını doğrula (`syslog` formatı doğru mu?).
+   - Uçtan uca test: 8080'e zararsız SQLi kalıplı istek → nginx log → Wazuh alarmı görülmeli.
+   - Bunlar geçince Faz 1 kapanır → Faz 2 (nmap keşif).
 
 ---
 
@@ -122,6 +126,13 @@ Faz 1 — Lab kurulumu:
 - `lab/wazuh/wazuh.sh`: iki compose dosyasını birleştiren sarmalayıcı.
 - TLS sertifikaları resmi üretici ile oluşturuldu: 12 dosya, izinler 400, sahipler 1000/999.
   Üretici çıktısında `find: command not found` vardı (temizlik adımı); tüm sertifikalar üretildi (listelenerek doğrulandı).
+
+**Başlatma ve doğrulama (gerçekten yapıldı)**
+- İmajlar indirildi (manager 981 MB, indexer 1044 MB, dashboard 483 MB sıkıştırılmış; ~25 dk sürdü).
+- `wazuh.sh up -d` → 3 konteyner `Up`. Bellek: 4.6 GB kullanılabilir.
+- Host'ta dinleyen tüm portlar `127.0.0.1` üzerinde: 443 (Wazuh dashboard), 8080 (nginx), 9050 (Tor) ve iki geçici port.
+  9200 / 55000 / 1514 / 1515 host'ta **yok** ✅ (override çalışıyor).
+- **Henüz yapılmadı:** dashboard girişi, wazuh-logtest, nginx→Wazuh alarm testi.
 
 **Öğrenilenler**
 - Compose override'da relative yollar ilk compose dosyasının klasörüne göre çözülür.
