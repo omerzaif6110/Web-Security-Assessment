@@ -14,7 +14,8 @@ güvenlik değerlendirmesi yapmak: keşif → zafiyet analizi → tespit (Wazuh)
 | OWASP Juice Shop konteyneri | Tek hedef uygulama |
 | nginx reverse proxy konteyneri | Juice Shop önündeki proxy; yapılandırması düzeltme aşamasında değiştirilebilir |
 | Wazuh single-node konteynerleri | Yalnızca tespit amaçlı; saldırı hedefi **değildir** |
-| Lab Docker ağları | `wsa-lab-internal` **172.30.10.0/24** (internal, internete çıkışsız) ve `wsa-lab-edge` **172.30.20.0/24** — Wazuh ağı kurulunca eklenecek |
+| Lab Docker ağları | `wsa-lab-internal` **172.30.10.0/24** (internal, internete çıkışsız) ve `wsa-lab-edge` **172.30.20.0/24** |
+| Wazuh ağı (yalnızca gözlem, saldırı hedefi değil) | `wsa-wazuh` **172.30.30.0/24**, dashboard `https://127.0.0.1` |
 | Giriş noktası | `http://127.0.0.1:8080` (nginx) |
 
 **Saldırı kaynağı:** Yalnızca aynı Kali VM.

@@ -105,3 +105,24 @@ Faz 1 — Lab kurulumu:
 - `internal: true` ağ internete çıkışı keser ama host'un köprü IP'si üzerinden erişimi engellemez.
 - Internal ağda port yayınlanamaz; bu yüzden nginx ayrıca bir "edge" ağına bağlı.
 - Config'i "yükledim" demek yetmez; container'ın gerçekte ne gördüğünü kontrol et.
+
+### 2026-11-22 — Faz 1: Wazuh single-node
+**Kararlar**
+- **Varsayılan parolalar değiştirilmedi** (kullanıcı kararı). Kabul edilmiş risk: dashboard yalnızca
+  `127.0.0.1:443`'te; LAN'dan erişilemez. Raporda "gerçek ortamda ilk değiştirilecek ayar" olarak belirtilecek.
+- Resmi `wazuh/wazuh-docker` v4.14.10 `lab/wazuh/upstream/` altına klonlandı (repoya girmez).
+  Not: `git clone --branch v4.14.10` "tag is not a commit" uyarısı verdi; gelinen commit `76ddb88`
+  (revert-image-tag-4.14.10-rc2 merge). Compose imajları `4.14.10` olarak sabitli.
+- Resmi dosyalara dokunulmadı; değişiklikler `lab/wazuh/docker-compose.override.yml` içinde:
+  - Resmi compose **6 portu 0.0.0.0'a açıyor** (1514, 1515, 514/udp, 55000, 9200, 443).
+    Override: yalnızca dashboard `127.0.0.1:443`; diğerleri `!reset []` ile kaldırıldı.
+  - Ağ `wsa-wazuh` **172.30.30.0/24**.
+  - `lab/logs/nginx` → manager `/var/log/nginx-lab` **salt okunur** (kanıt bütünlüğü).
+  - `lab/wazuh/wazuh_manager.conf` = resmi dosya + 2 `localfile` (nginx access/error, `syslog` formatı).
+- `lab/wazuh/wazuh.sh`: iki compose dosyasını birleştiren sarmalayıcı.
+- TLS sertifikaları resmi üretici ile oluşturuldu: 12 dosya, izinler 400, sahipler 1000/999.
+  Üretici çıktısında `find: command not found` vardı (temizlik adımı); tüm sertifikalar üretildi (listelenerek doğrulandı).
+
+**Öğrenilenler**
+- Compose override'da relative yollar ilk compose dosyasının klasörüne göre çözülür.
+- Compose'da listeyi birleştirmek yerine değiştirmek için `!override`, boşaltmak için `!reset` etiketi kullanılır.

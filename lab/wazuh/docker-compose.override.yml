@@ -1,0 +1,39 @@
+# ------------------------------------------------------------------
+# Wazuh single-node (resmi wazuh-docker v4.14.10) için lab değişiklikleri
+#
+# Resmi dosyaya dokunmuyoruz; bu dosya onun üstüne birleştirilir:
+#   ./wazuh.sh <compose komutu>   (bkz. wazuh.sh)
+#
+# DİKKAT: Relative yollar, Compose kuralı gereği İLK dosyanın klasörüne
+# (upstream/single-node/) göre çözülür. Bu yüzden ../../ var.
+#
+# Değişiklikler:
+#  1. Portlar: resmi dosya 6 portu 0.0.0.0'a açıyor. Yalnızca dashboard
+#     127.0.0.1:443'te kalıyor; diğerleri hiç yayınlanmıyor (konteynerler
+#     Docker ağı üzerinden konuşuyor, ajan kullanmıyoruz).
+#  2. Sabit alt ağ: 172.30.30.0/24 (SCOPE.md'de tanımlı).
+#  3. nginx logları manager'a salt okunur bağlanıyor + localfile'lı ossec.conf.
+#
+# Kabul edilmiş risk: varsayılan parolalar değiştirilmedi (kullanıcı kararı,
+# 2026-11-22). Dashboard yalnızca loopback'te olduğu için LAN'dan erişilemez.
+# ------------------------------------------------------------------
+services:
+  wazuh.manager:
+    ports: !reset []
+    volumes:
+      - ../../../logs/nginx:/var/log/nginx-lab:ro
+      - ../../wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+
+  wazuh.indexer:
+    ports: !reset []
+
+  wazuh.dashboard:
+    ports: !override
+      - "127.0.0.1:443:5601"
+
+networks:
+  default:
+    name: wsa-wazuh
+    ipam:
+      config:
+        - subnet: 172.30.30.0/24

@@ -69,3 +69,6 @@ Screenshots/*_faz0_deneme*.png
 .DS_Store
 __pycache__/
 *.pyc
+
+# --- Wazuh resmi deposu (üçüncü taraf; kendi değişikliklerimiz lab/wazuh/ altında) ---
+lab/wazuh/upstream/
