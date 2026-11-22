@@ -3,12 +3,13 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 0 — Planlama ✅ tamamlandı
+- **Aktif faz:** Faz 1 — Lab kurulumu (başladı)
 - **Son güncelleme:** 2026-11-22
 
 ## Bir sonraki adım
 Faz 1 — Lab kurulumu:
-1. Docker / Docker Compose kurulu mu kontrol et; VM kaynaklarını (RAM/disk) kontrol et (Wazuh single-node ~4 GB RAM ister).
+1. ~~Docker / kaynak kontrolü~~ → yapıldı (aşağıda). Kullanıcı `docker.io` + `docker-compose` kuracak,
+   servisi başlatacak, `kali`yi `docker` grubuna ekleyip oturumu yeniden açacak. Sonra `docker run --rm hello-world`.
 2. `lab/docker-compose.yml`: Juice Shop + nginx reverse proxy + Wazuh single-node, izole bridge ağ, portlar yalnızca `127.0.0.1`.
 3. nginx access/error loglarını Wazuh'a besle.
 4. Lab alt ağını SCOPE.md'ye yaz.
@@ -59,3 +60,15 @@ Faz 1 — Lab kurulumu:
 - `cmd1 && cmd2` zincirinde bir komut hata verirse sonrakiler çalışmaz (gh hatası scrot kurulumunu da durdurdu).
 - `git config` anahtarları `bölüm.ad` biçimindedir (`user.name`, `user.email`).
 - Ekran görüntüsü commit'lenmeden önce içeriği kontrol edilmeli.
+
+### 2026-11-22 — Faz 1 başlangıcı: ortam kontrolü
+**Bulgular**
+- Yalnızca `docker-cli` kurulu; **Docker motoru (`docker.io` / dockerd) yok**, Compose yok.
+- `kali` kullanıcısı `docker` grubunda değil.
+- 4 CPU, 8.4 GB RAM (~5 GB boş), 53 GB boş disk → yeterli; Wazuh indexer heap'i düşük tutulacak.
+- `vm.max_map_count = 1048576` (Wazuh için ≥262144 gerekli) → değişiklik gerekmiyor.
+- Hostta açık portlar: 127.0.0.1:9050 (Tor), 127.0.0.1:38167 → lab portlarıyla çakışma yok.
+- Wazuh sürümü: resmi `wazuh/wazuh-docker` deposunun son kararlı etiketi **v4.14.10**.
+
+**Bekleyen karar:** `docker` grubu root eşdeğeri yetki verir. Öneri: izole lab VM'i olduğu ve Claude'un
+parolasız docker komutu çalıştırabilmesi gerektiği için kabul etmek. Karar kullanıcıda.
