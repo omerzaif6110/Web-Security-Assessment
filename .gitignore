@@ -1,0 +1,71 @@
+# ============================================
+# Web-Security-Assessment — .gitignore
+# Amaç: sırların, ham trafik kayıtlarının ve büyük
+# dosyaların yanlışlıkla GitHub'a gitmesini önlemek.
+# ============================================
+
+# --- Ortam değişkenleri / sırlar ---
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+secrets/
+credentials*
+*credentials*.json
+*.token
+token*.txt
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# --- Wazuh parolaları ve sertifikaları ---
+# wazuh-docker kurulumu config/wazuh_indexer_ssl_certs altında sertifika üretir,
+# parolalar ise .env / internal_users.yml içinde durur.
+wazuh-passwords*.txt
+wazuh-install-files*
+**/wazuh_indexer_ssl_certs/
+**/internal_users.yml
+**/wazuh.yml.bak
+
+# --- Ağ yakalamaları (ham pcap = içinde oturum çerezi, parola olabilir) ---
+*.pcap
+*.pcapng
+*.cap
+*.pcap.gz
+# Paylaşılacak, temizlenmiş özetler için: Network-Analysis/*.md kullan
+
+# --- Büyük / ham loglar ---
+*.log
+logs/
+*.log.gz
+alerts.json
+archives.json
+**/wazuh-logs/
+
+# --- Araç çıktıları (ham hali; özetler Findings/ altına yazılır) ---
+*.zap
+*.session
+burp-project*/
+*.burp
+nmap-raw/
+*.xml.raw
+
+# --- Docker volume / veri klasörleri ---
+lab/data/
+lab/volumes/
+
+# --- Deneme ekran görüntüleri (kanıt değil, terminal içeriği görünebilir) ---
+Screenshots/*_faz0_deneme*.png
+
+# --- Editör / sistem ---
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+__pycache__/
+*.pyc
