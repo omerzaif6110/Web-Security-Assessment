@@ -1,0 +1,58 @@
+# ------------------------------------------------------------------
+# Web-Security-Assessment lab — hedef uygulama katmanı
+#
+#   Kali ──127.0.0.1:8080──► nginx-proxy ──lab-internal──► juice-shop
+#
+# - juice-shop yalnızca "lab-internal" ağında: port yayınlanmıyor,
+#   internal: true olduğu için internete çıkışı yok.
+# - nginx-proxy iki ağda: dışarıya tek giriş noktası.
+# - Port yalnızca 127.0.0.1'e bağlı → LAN'dan erişilemez.
+# - Wazuh ayrı bir compose projesi (lab/wazuh/); nginx loglarını
+#   ./logs/nginx bind-mount'u üzerinden okur.
+# ------------------------------------------------------------------
+name: wsa-lab
+
+services:
+  juice-shop:
+    image: bkimminich/juice-shop:v20.4.0
+    container_name: juice-shop
+    restart: unless-stopped
+    networks:
+      lab-internal:
+        ipv4_address: 172.30.10.10
+    mem_limit: 768m
+
+  nginx:
+    image: nginx:1.30.7-alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    depends_on:
+      - juice-shop
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      # Tek dosya değil KLASÖR bağlanıyor: tek dosya bind-mount'u inode'a bağlanır,
+      # editör dosyayı yeniden yazınca container eski içeriği görmeye devam eder.
+      - ./nginx:/etc/nginx/conf.d:ro
+      # İmajda access.log /dev/stdout'a bağlı; klasörü bağlayınca loglar
+      # gerçek dosyaya yazılır ve Wazuh okuyabilir. (git'e girmez: .gitignore)
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      lab-internal:
+        ipv4_address: 172.30.10.20
+      lab-edge:
+        ipv4_address: 172.30.20.20
+    mem_limit: 128m
+
+networks:
+  lab-internal:
+    name: wsa-lab-internal
+    internal: true          # dış dünyaya yönlendirme yok
+    ipam:
+      config:
+        - subnet: 172.30.10.0/24
+  lab-edge:
+    name: wsa-lab-edge      # yalnızca port yayınlamak için (internal ağda port yayınlanamaz)
+    ipam:
+      config:
+        - subnet: 172.30.20.0/24

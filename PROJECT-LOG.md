@@ -8,11 +8,12 @@
 
 ## Bir sonraki adım
 Faz 1 — Lab kurulumu:
-1. ~~Docker / kaynak kontrolü~~ → yapıldı (aşağıda). Kullanıcı `docker.io` + `docker-compose` kuracak,
-   servisi başlatacak, `kali`yi `docker` grubuna ekleyip oturumu yeniden açacak. Sonra `docker run --rm hello-world`.
-2. `lab/docker-compose.yml`: Juice Shop + nginx reverse proxy + Wazuh single-node, izole bridge ağ, portlar yalnızca `127.0.0.1`.
-3. nginx access/error loglarını Wazuh'a besle.
-4. Lab alt ağını SCOPE.md'ye yaz.
+1. ~~Docker kurulumu~~ ✅
+2. ~~Juice Shop + nginx (`lab/docker-compose.yml`)~~ ✅ — `cd lab && docker compose up -d`
+3. **Wazuh single-node v4.14.10** kurulacak. Önce karar: varsayılan parolalar değiştirilsin mi?
+   (Öneri: değiştir; parolayı kullanıcı terminalde girer, dosyalar .gitignore'da.)
+4. nginx `lab/logs/nginx/access.log` → Wazuh manager'a localfile olarak bağlanacak, test alarmı üretilecek.
+5. Wazuh ağını SCOPE.md'ye ekle.
 
 ---
 
@@ -70,5 +71,37 @@ Faz 1 — Lab kurulumu:
 - Hostta açık portlar: 127.0.0.1:9050 (Tor), 127.0.0.1:38167 → lab portlarıyla çakışma yok.
 - Wazuh sürümü: resmi `wazuh/wazuh-docker` deposunun son kararlı etiketi **v4.14.10**.
 
-**Bekleyen karar:** `docker` grubu root eşdeğeri yetki verir. Öneri: izole lab VM'i olduğu ve Claude'un
-parolasız docker komutu çalıştırabilmesi gerektiği için kabul etmek. Karar kullanıcıda.
+**Karar (kullanıcı):** `kali` `docker` grubuna eklendi. Bu grup root eşdeğeri yetki verir
+(`docker run -v /:/host`); yalnızca lab amaçlı VM olduğu için kabul edildi.
+
+### 2026-11-22 — Faz 1: Docker kurulumu ve hedef katman
+**Yapılanlar**
+- Kullanıcı kurdu: `docker.io` 28.5.2, `docker-compose` 2.40.3. Kurulum sorusu "purge'da verileri sil?" → **No**
+  (Wazuh volume'larındaki kanıtlar korunsun). `hello-world` çalıştı (yeniden oturum açıldıktan sonra).
+- `lab/docker-compose.yml`: Juice Shop `v20.4.0` + nginx `1.30.7-alpine` (sürümler sabitlendi).
+  - `wsa-lab-internal` 172.30.10.0/24 (`internal: true`): juice-shop .10, nginx .20
+  - `wsa-lab-edge` 172.30.20.0/24: nginx .20, port `127.0.0.1:8080`
+- nginx baseline config: güvenlik başlığı / rate limit / TLS **bilerek yok** (Faz 6'da eklenecek).
+
+**Doğrulama testleri (gerçekten yapıldı)**
+| Test | Beklenen | Sonuç |
+|---|---|---|
+| `curl 127.0.0.1:8080` | 200, Juice Shop | ✅ HTTP 200, `<title>OWASP Juice Shop` |
+| `curl 10.0.2.3:8080` (VM'in LAN IP'si) | Bağlanamamalı | ✅ bağlanamadı; `ss`: yalnızca 127.0.0.1:8080 |
+| juice-shop içinden `1.1.1.1:443` TCP | Başarısız | ✅ `ENETUNREACH` |
+| nginx access.log dosyaya yazılıyor | Evet | ✅ `lab/logs/nginx/access.log` |
+| Kali → `172.30.10.10:3000` doğrudan | — | ⚠️ HTTP 200: host köprü arayüzünden nginx'i atlayabiliyor → SCOPE'a kural eklendi |
+
+**Karşılaşılan sorunlar ve çözümler**
+1. Her istek access.log'a **iki kez** yazılıyordu. Neden: imajın `nginx.conf`'u http{} seviyesinde
+   `access_log ... main` tanımlıyor; benim `combined` satırım da aynı seviyedeydi → ikisi birden aktif.
+   Çözüm: `access_log`'u `server{}` içine taşı (alt blok üsttekini geçersiz kılar).
+2. Düzeltmeden sonra da çift satır devam etti. Neden: **tek dosya bind-mount** inode'a bağlanır; dosya
+   yeniden yazılınca container eski içeriği görür (`docker exec ... grep` ile doğrulandı).
+   Çözüm: klasör bağlama (`./nginx:/etc/nginx/conf.d:ro`) + `--force-recreate`. Sonra 1 istek = 1 satır ✅
+
+**Öğrenilenler**
+- Linux grup üyeliği oturum açılışında okunur; `usermod -aG` sonrası yeniden giriş gerekir.
+- `internal: true` ağ internete çıkışı keser ama host'un köprü IP'si üzerinden erişimi engellemez.
+- Internal ağda port yayınlanamaz; bu yüzden nginx ayrıca bir "edge" ağına bağlı.
+- Config'i "yükledim" demek yetmez; container'ın gerçekte ne gördüğünü kontrol et.
