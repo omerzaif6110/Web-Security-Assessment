@@ -20,7 +20,16 @@ services:
     networks:
       lab-internal:
         ipv4_address: 172.30.10.10
-    mem_limit: 768m
+    # Lab altyapı düzeltmesi (2026-11-23, Faz 2 R-04): 768m ile Node heap sınırını
+    # kendisi ~432 MB seçiyordu ve tarama yükünde "JavaScript heap out of memory" ile
+    # çöküyordu. Heap'i açıkça 1 GB yapıp konteynere heap dışı bellek için pay bırakıyoruz.
+    # Bu uygulama düzeltmesi DEĞİL: rate limiting eksikliği (R-04) Faz 6'da ele alınacak.
+    # Doğrulama testi: bellek istek başına ~0,75 MB doğrusal artıyor (sızıntı); 1 GB heap
+    # çökmeyi yalnızca geciktiriyor (~85 sn / ~3400 istek @40 rps). Bkz. Reconnaissance/README.md §5.3
+    # Juice Shop sürekli yük altında çalışırken bellek takip edilmeli.
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=1024
+    mem_limit: 1536m
 
   nginx:
     image: nginx:1.30.7-alpine

@@ -5,3 +5,5 @@ ffuf başlangıcı (UTC): 2026-11-23T17:44:27
 ffuf bitişi (UTC): 2026-11-23T17:45:38
 ffuf-2 (rate 40) başlangıcı (UTC): 2026-11-23T17:46:55
 ffuf-2 bitişi (UTC): 2026-11-23T17:49:06
+kararlılık testi (ffuf rate 40) başlangıcı (UTC): 2026-11-23T17:58:46
+kararlılık testi bitişi (UTC): 2026-11-23T18:01:01

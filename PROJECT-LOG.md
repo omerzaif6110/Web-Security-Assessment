@@ -8,9 +8,10 @@
 
 ## Bir sonraki adım
 Faz 3 — Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine), çıktılar `Vulnerability-Analysis/`, `Findings/`:
-1. **Önce karar:** Juice Shop yük altında V8 heap OOM ile çöküyor (Faz 2, R-04). ZAP aktif taraması daha yoğun
-   olacak. Seçenekler: (a) lab'da `mem_limit`'i artırmak / `NODE_OPTIONS=--max-old-space-size` vermek
-   (lab altyapı düzeltmesi, belgelenir), (b) olduğu gibi bırakıp düşük hızla taramak.
+1. ~~Bellek kararı~~ → artırıldı (`mem_limit 1536m`, heap 1 GB). **Ama sızıntı var:** bellek istek başına ~0,75 MB
+   büyüyor; 1 GB heap ~3400 istekte (40 rps'de ~85 sn) doluyor ve uygulama yine çöküyor.
+   **Bekleyen karar:** Faz 3'te bununla nasıl çalışılacak (taramayı parçalara bölüp aralarda bellek takibi /
+   yeniden başlatma, ya da önce sızıntının kök nedenini araştırma). ZAP aktif taraması on binlerce istek atar.
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
@@ -191,6 +192,14 @@ Ayrıntılı rapor: [Reconnaissance/README.md](Reconnaissance/README.md) · ham 
 - ffuf `-mc` varsayılanı 502'yi içermez; hedef çökerken tarama sessizce eksik sonuç verir.
 - Taramanın hedefte ne yaptığını (5xx, çökme) loglardan izlemek keşfin parçası.
 - `OOMKilled=false` ≠ bellek sorunu yok: Node.js'in kendi heap sınırı cgroup sınırından önce dolabilir.
+
+### 2026-11-23 — Juice Shop bellek düzeltmesi ve kararlılık testi
+- Kullanıcı kararı: belleği artır. `lab/docker-compose.yml`: `mem_limit 768m → 1536m`, `NODE_OPTIONS=--max-old-space-size=1024`.
+  Heap sınırı 432 → 1120 MB (PID 1 ortamında doğrulandı). Uygulama açılışta ~5 sn 502 verdi, sonra 200.
+- Kararlılık testi (Faz 2 ffuf yükünün aynısı, 40 rps, 17:58–18:01 UTC): **1 çökme** (önceden 5), 691 × 502.
+  Bellek 3 sn'de ~90 MB doğrusal arttı, 1.28 GiB'ta heap OOM → **uygulama seviyesinde bellek sızıntısı**.
+  Söz verildiği gibi test tekrarlanmadı/zorlanmadı. R-04 "Yüksek"e yükseltildi (Reconnaissance/README.md §5.3).
+- **Öğrenilen:** Kaynak artırmak sızıntıyı çözmez, yalnızca geciktirir; ölçmeden "düzeldi" denmez.
 
 **Gözlem (Faz 4 için):** Kaynak IP her zaman `172.30.20.1` (edge ağının gateway'i = Kali). nginx'in arkasında
 gerçek istemci IP'si korunuyor ama Wazuh'ta tüm saldırılar aynı IP'den görünecek. Wazuh kuralı 31106 kalıp + HTTP 200

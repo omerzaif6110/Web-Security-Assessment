@@ -53,7 +53,7 @@ SYN taraması (`-sS`) ve ARP keşfi yapılabilir. `127.0.0.1` için `-sT` kullan
 | R-01 | **Reverse proxy atlanabiliyor**: Juice Shop'a `172.30.10.10:3000` üzerinden doğrudan erişim | `02-tcp-allports`, `03a` | Orta | Bu yol nginx loglarına/Wazuh'a düşmüyor. Gerçek ortamda uygulama yalnızca proxy'den erişilebilir olmalı |
 | R-02 | **`/ftp` dizin listeleme** — `incident-support.kdbx` (KeePass), `*.bak` yedekler, `encrypt.pyc`, `suspicious_errors.yml`, `quarantine/` | `curl /ftp/` (yalnızca adlar) | Yüksek (aday) | Faz 3: hassas veri ifşası |
 | R-03 | **Ayrıntılı hata sayfaları**: `/api`, `/rest/*` → 500; `Express ^4.22.1` ve iç yollar (`/juice-shop/node_modules/express/lib/router/...`) | `curl /api` | Düşük | Faz 3: stack trace içeriği |
-| R-04 | **Erişilebilirlik**: ~40–100 istek/sn'lik içerik keşfi uygulamayı **5 kez çökertti** (V8 heap OOM); nginx'te rate limiting yok | §5.2 | Orta | Faz 6: `limit_req`. Lab notu: `mem_limit` katkısı |
+| R-04 | **Erişilebilirlik / bellek sızıntısı**: ~40–100 istek/sn'lik içerik keşfi uygulamayı **5 kez çökertti** (V8 heap OOM). Bellek istek başına ~0,75 MB büyüyor ve geri verilmiyor; 1 GB heap ile de ~3400 istekte çöküyor. nginx'te rate limiting yok | §5.2, §5.3 | Yüksek | Faz 6: `limit_req` (yalnızca hafifletir; kök neden uygulamada) |
 | R-05 | **Gevşek CORS**: `Access-Control-Allow-Origin: *`, izinli metodlar `GET,HEAD,PUT,PATCH,POST,DELETE` | `03*` http-cors, `04a` | Orta (aday) | Faz 3 |
 | R-06 | **Riskli HTTP metodları** ilan ediliyor: `PUT`, `DELETE` | `05-http-scripts-8080` | Düşük (aday) | Faz 3: gerçekten işlevsel mi? |
 | R-07 | **Sürüm ifşası**: `Server: nginx/1.30.7` | `04a` | Bilgi | Faz 6: `server_tokens off` |
@@ -107,7 +107,19 @@ Toplam **9895** alarm:
 - Çökme anında işlenen istekler rastgele kelimeler (`/public`, `/ldap`, `/slides`…) → tek bir tetikleyici istek yok,
   **birikmiş yük** (~40 sn'de bir). SCOPE gereği (DoS yasak) çökme yeniden üretilmeye çalışılmadı; analiz yalnızca mevcut loglardan.
 
-### 5.3 Tespit boşlukları (Faz 4 girdisi)
+### 5.3 Takip testi: bellek artırımı ve sızıntı (2026-11-23 17:58–18:01 UTC)
+Lab düzeltmesi: `mem_limit 768m → 1536m`, `NODE_OPTIONS=--max-old-space-size=1024` (heap sınırı 432 → 1120 MB,
+PID 1'in ortamında doğrulandı). Aynı yük (ffuf, `dirb/common.txt`, 40 istek/sn) tekrarlandı:
+
+- 3 sn aralıklı bellek örnekleri: `181 → 270 → 365 → 445 → 540 → 610 → 672 → 747 → 790 → 884 → 1014 MiB → 1.04 → 1.10 → 1.18 → 1.25 → 1.28 GiB`
+  → **çökme** (18:00:11, exit 139, `JavaScript heap out of memory`, heap 1019.8 MB) → yeniden başlama → `42 → … → 716 MiB`.
+- Sonuç: 1 çökme (önceki ayarda 5), 691 × 502.
+- **Bellek istek sayısıyla doğrusal büyüyor ve GC ile geri kazanılmıyor** (~90 MB / 3 sn ≈ istek başına ~0,75 MB)
+  → uygulama seviyesinde **bellek sızıntısı**. Heap'i büyütmek çökmeyi yalnızca geciktiriyor (432 MB: ~40 sn, 1 GB: ~85 sn).
+- **R-04 güncellemesi:** Kimlik doğrulaması gerektirmeyen ~3–4 bin sıradan GET isteği uygulamayı çökertebiliyor.
+  Sızıntının kök nedeni araştırılmadı (Juice Shop kaynak kodu analizi gerektirir).
+
+### 5.4 Tespit boşlukları (Faz 4 girdisi)
 | Saldırgan eylemi | Görüldü mü | Neden |
 |---|---|---|
 | ARP keşfi, SYN port taramaları | ❌ | Wazuh yalnızca nginx loglarını okuyor; ağ sensörü yok |
