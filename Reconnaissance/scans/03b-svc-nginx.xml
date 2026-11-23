@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Mon Nov 23 12:42:31 2026 as: /usr/lib/nmap/nmap -&#45;privileged -&#45;privileged -sS -sV -sC -n -&#45;reason -p 80 -oA Reconnaissance/scans/03b-svc-nginx 172.30.10.20 172.30.20.20 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -&#45;privileged -sS -sV -sC -n -&#45;reason -p 80 -oA Reconnaissance/scans/03b-svc-nginx 172.30.10.20 172.30.20.20" start="1795455751" startstr="Mon Nov 23 12:42:31 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="1" services="80"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.10.20" addrtype="ipv4"/>
+<address addr="22:8E:08:8B:64:67" addrtype="mac"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<hosthint><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.20.20" addrtype="ipv4"/>
+<address addr="DE:6A:E5:0F:65:EC" addrtype="mac"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1795455752" endtime="1795455759"><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.10.20" addrtype="ipv4"/>
+<address addr="22:8E:08:8B:64:67" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="http" product="nginx" version="1.30.7" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.30.7</cpe></service><script id="http-server-header" output="nginx/1.30.7"><elem>nginx/1.30.7</elem>
+</script><script id="http-cors" output="HEAD GET POST PUT DELETE PATCH"/><script id="http-title" output="OWASP Juice Shop"><elem key="title">OWASP Juice Shop</elem>
+</script><script id="http-robots.txt" output="1 disallowed entry &#xa;/ftp"/></port>
+</ports>
+<times srtt="45" rttvar="3766" to="100000"/>
+</host>
+<host starttime="1795455759" endtime="1795455765"><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.20.20" addrtype="ipv4"/>
+<address addr="DE:6A:E5:0F:65:EC" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="http" product="nginx" version="1.30.7" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.30.7</cpe></service><script id="http-robots.txt" output="1 disallowed entry &#xa;/ftp"/><script id="http-title" output="OWASP Juice Shop"><elem key="title">OWASP Juice Shop</elem>
+</script><script id="http-server-header" output="nginx/1.30.7"><elem>nginx/1.30.7</elem>
+</script><script id="http-cors" output="HEAD GET POST PUT DELETE PATCH"/></port>
+</ports>
+<times srtt="40" rttvar="3767" to="100000"/>
+</host>
+<runstats><finished time="1795455765" timestr="Mon Nov 23 12:42:45 2026" summary="Nmap done at Mon Nov 23 12:42:45 2026; 2 IP addresses (2 hosts up) scanned in 13.68 seconds" elapsed="13.68" exit="success"/><hosts up="2" down="0" total="2"/>
+</runstats>
+</nmaprun>

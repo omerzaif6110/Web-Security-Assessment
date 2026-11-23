@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Mon Nov 23 12:41:45 2026 as: /usr/lib/nmap/nmap -&#45;privileged -&#45;privileged -sn -n -&#45;reason -&#45;exclude 172.30.10.1,172.30.20.1 -oA Reconnaissance/scans/01-host-discovery 172.30.10.0/24 172.30.20.0/24 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -&#45;privileged -sn -n -&#45;reason -&#45;exclude 172.30.10.1,172.30.20.1 -oA Reconnaissance/scans/01-host-discovery 172.30.10.0/24 172.30.20.0/24" start="1795455705" startstr="Mon Nov 23 12:41:45 2026" version="7.99" xmloutputversion="1.05">
+<verbose level="0"/>
+<debugging level="0"/>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.10.10" addrtype="ipv4"/>
+<address addr="76:1C:EE:F2:11:AF" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<times srtt="109" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.10.20" addrtype="ipv4"/>
+<address addr="22:8E:08:8B:64:67" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<times srtt="172" rttvar="1322" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.30.20.20" addrtype="ipv4"/>
+<address addr="DE:6A:E5:0F:65:EC" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<times srtt="37" rttvar="1588" to="100000"/>
+</host>
+<runstats><finished time="1795455709" timestr="Mon Nov 23 12:41:49 2026" summary="Nmap done at Mon Nov 23 12:41:49 2026; 510 IP addresses (3 hosts up) scanned in 3.95 seconds" elapsed="3.95" exit="success"/><hosts up="3" down="507" total="510"/>
+</runstats>
+</nmaprun>

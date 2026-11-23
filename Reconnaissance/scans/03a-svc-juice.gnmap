@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:42:19 2026 as: /usr/lib/nmap/nmap --privileged --privileged -sS -sV -sC -n --reason -p 3000 -oA Reconnaissance/scans/03a-svc-juice 172.30.10.10
+Host: 172.30.10.10 ()	Status: Up
+Host: 172.30.10.10 ()	Ports: 3000/open/tcp//ppp?///
+# Nmap done at Mon Nov 23 12:42:31 2026 -- 1 IP address (1 host up) scanned in 12.11 seconds

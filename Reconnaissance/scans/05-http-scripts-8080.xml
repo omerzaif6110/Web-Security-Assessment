@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Mon Nov 23 12:44:00 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sT -n -p 8080 -&#45;script http-methods,http-enum -&#45;script-args http-methods.test-all=true -oA Reconnaissance/scans/05-http-scripts-8080 127.0.0.1 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sT -n -p 8080 -&#45;script http-methods,http-enum -&#45;script-args http-methods.test-all=true -oA Reconnaissance/scans/05-http-scripts-8080 127.0.0.1" start="1795455840" startstr="Mon Nov 23 12:44:00 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="connect" protocol="tcp" numservices="1" services="8080"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1795455840" endtime="1795455840"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="127.0.0.1" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="8080"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="http-proxy" method="table" conf="3"/><script id="http-methods" output="&#xa;  Supported Methods: GET HEAD POST OPTIONS DELETE PUT&#xa;  Potentially risky methods: DELETE PUT"><table key="Supported Methods">
+<elem>GET</elem>
+<elem>HEAD</elem>
+<elem>POST</elem>
+<elem>OPTIONS</elem>
+<elem>DELETE</elem>
+<elem>PUT</elem>
+</table>
+<table key="Potentially risky methods">
+<elem>DELETE</elem>
+<elem>PUT</elem>
+</table>
+</script></port>
+</ports>
+<times srtt="23" rttvar="5000" to="100000"/>
+</host>
+<runstats><finished time="1795455840" timestr="Mon Nov 23 12:44:00 2026" summary="Nmap done at Mon Nov 23 12:44:00 2026; 1 IP address (1 host up) scanned in 0.39 seconds" elapsed="0.39" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

@@ -1,0 +1,11 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:41:45 2026 as: /usr/lib/nmap/nmap --privileged --privileged -sn -n --reason --exclude 172.30.10.1,172.30.20.1 -oA Reconnaissance/scans/01-host-discovery 172.30.10.0/24 172.30.20.0/24
+Nmap scan report for 172.30.10.10
+Host is up, received arp-response (0.00011s latency).
+MAC Address: 76:1C:EE:F2:11:AF (Unknown)
+Nmap scan report for 172.30.10.20
+Host is up, received arp-response (0.00017s latency).
+MAC Address: 22:8E:08:8B:64:67 (Unknown)
+Nmap scan report for 172.30.20.20
+Host is up, received arp-response (0.000037s latency).
+MAC Address: DE:6A:E5:0F:65:EC (Unknown)
+# Nmap done at Mon Nov 23 12:41:49 2026 -- 510 IP addresses (3 hosts up) scanned in 3.95 seconds

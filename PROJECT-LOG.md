@@ -3,18 +3,19 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 1 ✅ tamamlandı → sıradaki Faz 2 (Keşif)
+- **Aktif faz:** Faz 2 ✅ tamamlandı → sıradaki Faz 3 (Zafiyet analizi)
 - **Son güncelleme:** 2026-11-23
 
 ## Bir sonraki adım
-Faz 2 — Keşif (nmap), çıktılar `Reconnaissance/`:
-1. Lab ayakta mı: `docker ps` (VM açılışında kendiliğinden kalkıyor; kalkmadıysa
-   `cd lab && docker compose up -d` ve `lab/wazuh/wazuh.sh up -d`).
-2. Taramadan önce hedef doğrulama: `docker network inspect` ile alt ağlar (SCOPE.md §4).
-3. Yalnızca kapsam içi hedefler: `127.0.0.1` (yayınlanan portlar) ve `172.30.10.0/24`, `172.30.20.0/24`.
-   Wazuh ağı (172.30.30.0/24) gözlemci; tarama hedefi değil.
-4. Beklenen keşif bulgusu: Juice Shop'a nginx'i atlayan doğrudan erişim (`172.30.10.10:3000`).
-5. nmap taramasının Wazuh'ta ne ürettiğine bak (nginx üzerinden geçen istekler alarm üretmeli).
+Faz 3 — Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine), çıktılar `Vulnerability-Analysis/`, `Findings/`:
+1. **Önce karar:** Juice Shop yük altında V8 heap OOM ile çöküyor (Faz 2, R-04). ZAP aktif taraması daha yoğun
+   olacak. Seçenekler: (a) lab'da `mem_limit`'i artırmak / `NODE_OPTIONS=--max-old-space-size` vermek
+   (lab altyapı düzeltmesi, belgelenir), (b) olduğu gibi bırakıp düşük hızla taramak.
+2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
+   `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
+3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
+   edildi mi, düzeltme önerisi.
+4. Saldırılar `127.0.0.1:8080` üzerinden (SCOPE kuralı).
 
 Lab erişimi: Juice Shop http://127.0.0.1:8080 · Wazuh dashboard https://127.0.0.1 (varsayılan kimlik bilgileri, kabul edilmiş risk)
 
@@ -25,7 +26,7 @@ Lab erişimi: Juice Shop http://127.0.0.1:8080 · Wazuh dashboard https://127.0.
 |---|---|---|---|
 | 0 | Planlama, iskelet, kapsam | kök dizin | Tamamlandı |
 | 1 | Lab kurulumu (Docker Compose: Juice Shop + nginx + Wazuh) | `lab/` | Tamamlandı |
-| 2 | Keşif (nmap) | `Reconnaissance/` | Bekliyor |
+| 2 | Keşif (nmap) | `Reconnaissance/` | Tamamlandı |
 | 3 | Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine) | `Vulnerability-Analysis/`, `Findings/` | Bekliyor |
 | 4 | Wazuh tespit kuralları | `Detection/` | Bekliyor |
 | 5 | Wireshark trafik analizi | `Network-Analysis/` | Bekliyor |
@@ -171,6 +172,25 @@ Not: Kontrollerde parolalar komuta yazılmadı; konteynerlerin kendi ortam deği
   (seçim sırasında Firefox önde değildi) → kullanılmadı, commit'lenmedi; `-d 5` gecikmeli tam ekran ile yeniden alındı.
 
 **Faz 1 sonucu: TAMAMLANDI.** Lab çalışıyor, izole, yeniden başlatmaya dayanıklı; saldırı → tespit zinciri doğrulandı.
+
+### 2026-11-23 — Faz 2: Keşif
+Ayrıntılı rapor: [Reconnaissance/README.md](Reconnaissance/README.md) · ham çıktılar `Reconnaissance/scans/`
+- Hedefler `docker network inspect` ile doğrulandı; gateway'ler (Kali'nin kendisi) ve Wazuh ağı hariç tutuldu.
+- nmap: 3 host, 3 açık port (3000 Juice Shop, 2×80 nginx) + 127.0.0.1:8080. Sudo'suz SYN taraması (nmap capability).
+- 10 keşif bulgusu (R-01…R-10): proxy atlama, `/ftp` dizin listeleme (kdbx, .bak), ayrıntılı hatalar, CORS `*`,
+  PUT/DELETE, sürüm ifşası, eksik başlıklar…
+- **Beklenmedik olay:** ffuf taramaları sırasında Juice Shop **5 kez çöktü** (V8 heap OOM, exit 139, `OOMKilled=false`);
+  nginx 4916×502. ffuf'un varsayılan eşleştiricisi 502'yi göstermediği için sonuçlar eksik/tutarsızdı → iki tur + elle doğrulama.
+  DoS yasak olduğu için çökme yeniden üretilmedi; yalnızca loglardan analiz.
+- Yanlış pozitifler doğrulandı: nmap `http-open-proxy` (kapsam dışına trafik **çıkmadı**), port 3000 `ppp?`, http-enum sessizliği.
+- Wazuh: 9895 alarm, ama port taramaları ve doğrudan 3000 erişimi **hiç** görülmedi; "web taraması" korelasyonu (31151) 0 → Faz 4.
+
+**Öğrenilenler**
+- Otomatik araç çıktısı ≠ gerçek: ham cevabı oku (nmap `ppp?` aslında HTTP'ydi).
+- SPA'ların "her şeye 200" davranışı http-enum'u ve 404 tabanlı tespit kurallarını körleştiriyor.
+- ffuf `-mc` varsayılanı 502'yi içermez; hedef çökerken tarama sessizce eksik sonuç verir.
+- Taramanın hedefte ne yaptığını (5xx, çökme) loglardan izlemek keşfin parçası.
+- `OOMKilled=false` ≠ bellek sorunu yok: Node.js'in kendi heap sınırı cgroup sınırından önce dolabilir.
 
 **Gözlem (Faz 4 için):** Kaynak IP her zaman `172.30.20.1` (edge ağının gateway'i = Kali). nginx'in arkasında
 gerçek istemci IP'si korunuyor ama Wazuh'ta tüm saldırılar aynı IP'den görünecek. Wazuh kuralı 31106 kalıp + HTTP 200

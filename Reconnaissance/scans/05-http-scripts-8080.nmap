@@ -1,0 +1,11 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:44:00 2026 as: /usr/lib/nmap/nmap --privileged -sT -n -p 8080 --script http-methods,http-enum --script-args http-methods.test-all=true -oA Reconnaissance/scans/05-http-scripts-8080 127.0.0.1
+Nmap scan report for 127.0.0.1
+Host is up (0.000023s latency).
+
+PORT     STATE SERVICE
+8080/tcp open  http-proxy
+| http-methods: 
+|   Supported Methods: GET HEAD POST OPTIONS DELETE PUT
+|_  Potentially risky methods: DELETE PUT
+
+# Nmap done at Mon Nov 23 12:44:00 2026 -- 1 IP address (1 host up) scanned in 0.39 seconds

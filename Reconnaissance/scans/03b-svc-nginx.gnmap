@@ -1,0 +1,6 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:42:31 2026 as: /usr/lib/nmap/nmap --privileged --privileged -sS -sV -sC -n --reason -p 80 -oA Reconnaissance/scans/03b-svc-nginx 172.30.10.20 172.30.20.20
+Host: 172.30.10.20 ()	Status: Up
+Host: 172.30.10.20 ()	Ports: 80/open/tcp//http//nginx 1.30.7/
+Host: 172.30.20.20 ()	Status: Up
+Host: 172.30.20.20 ()	Ports: 80/open/tcp//http//nginx 1.30.7/
+# Nmap done at Mon Nov 23 12:42:45 2026 -- 2 IP addresses (2 hosts up) scanned in 13.68 seconds

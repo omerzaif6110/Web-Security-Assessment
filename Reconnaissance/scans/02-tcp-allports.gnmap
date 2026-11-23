@@ -1,0 +1,8 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:42:03 2026 as: /usr/lib/nmap/nmap --privileged --privileged -sS -p- -n --reason -T4 -oA Reconnaissance/scans/02-tcp-allports 172.30.10.10 172.30.10.20 172.30.20.20
+Host: 172.30.10.10 ()	Status: Up
+Host: 172.30.10.10 ()	Ports: 3000/open/tcp//ppp///	Ignored State: closed (65534)
+Host: 172.30.10.20 ()	Status: Up
+Host: 172.30.10.20 ()	Ports: 80/open/tcp//http///	Ignored State: closed (65534)
+Host: 172.30.20.20 ()	Status: Up
+Host: 172.30.20.20 ()	Ports: 80/open/tcp//http///	Ignored State: closed (65534)
+# Nmap done at Mon Nov 23 12:42:08 2026 -- 3 IP addresses (3 hosts up) scanned in 4.98 seconds

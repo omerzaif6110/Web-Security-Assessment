@@ -1,0 +1,23 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:42:03 2026 as: /usr/lib/nmap/nmap --privileged --privileged -sS -p- -n --reason -T4 -oA Reconnaissance/scans/02-tcp-allports 172.30.10.10 172.30.10.20 172.30.20.20
+Nmap scan report for 172.30.10.10
+Host is up, received arp-response (0.000016s latency).
+Not shown: 65534 closed tcp ports (reset)
+PORT     STATE SERVICE REASON
+3000/tcp open  ppp     syn-ack ttl 64
+MAC Address: 76:1C:EE:F2:11:AF (Unknown)
+
+Nmap scan report for 172.30.10.20
+Host is up, received arp-response (0.000011s latency).
+Not shown: 65534 closed tcp ports (reset)
+PORT   STATE SERVICE REASON
+80/tcp open  http    syn-ack ttl 64
+MAC Address: 22:8E:08:8B:64:67 (Unknown)
+
+Nmap scan report for 172.30.20.20
+Host is up, received arp-response (0.000013s latency).
+Not shown: 65534 closed tcp ports (reset)
+PORT   STATE SERVICE REASON
+80/tcp open  http    syn-ack ttl 64
+MAC Address: DE:6A:E5:0F:65:EC (Unknown)
+
+# Nmap done at Mon Nov 23 12:42:08 2026 -- 3 IP addresses (3 hosts up) scanned in 4.98 seconds

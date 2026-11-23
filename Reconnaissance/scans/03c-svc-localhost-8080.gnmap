@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Mon Nov 23 12:42:45 2026 as: /usr/lib/nmap/nmap --privileged -sT -sV -sC -n --reason -p 8080 -oA Reconnaissance/scans/03c-svc-localhost-8080 127.0.0.1
+Host: 127.0.0.1 ()	Status: Up
+Host: 127.0.0.1 ()	Ports: 8080/open/tcp//http//nginx 1.30.7/
+# Nmap done at Mon Nov 23 12:42:52 2026 -- 1 IP address (1 host up) scanned in 6.74 seconds
