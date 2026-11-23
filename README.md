@@ -25,7 +25,7 @@ Yalnızca bu lab ve izole Docker ağı. Dışarıya hiçbir tarama yapılmaz. De
 | # | Faz | Klasör | Durum |
 |---|---|---|---|
 | 0 | Planlama | — | ✅ |
-| 1 | Lab kurulumu | `lab/` | ⚪ |
+| 1 | Lab kurulumu | [lab](lab/) | ✅ |
 | 2 | Keşif (nmap) | [Reconnaissance](Reconnaissance/) | ⚪ |
 | 3 | Zafiyet analizi (ZAP/Burp) | [Vulnerability-Analysis](Vulnerability-Analysis/) | ⚪ |
 | 4 | Wazuh tespit kuralları | [Detection](Detection/) | ⚪ |

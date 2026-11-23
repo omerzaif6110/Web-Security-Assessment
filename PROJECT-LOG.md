@@ -3,21 +3,20 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 1 — Lab kurulumu (başladı)
-- **Son güncelleme:** 2026-11-22
+- **Aktif faz:** Faz 1 ✅ tamamlandı → sıradaki Faz 2 (Keşif)
+- **Son güncelleme:** 2026-11-23
 
 ## Bir sonraki adım
-Faz 1 — Lab kurulumu:
-1. ~~Docker kurulumu~~ ✅
-2. ~~Juice Shop + nginx (`lab/docker-compose.yml`)~~ ✅ — `cd lab && docker compose up -d`
-3. ~~Wazuh single-node v4.14.10 kurulumu ve başlatma~~ ✅ (konteynerler ayakta, portlar loopback'te)
-4. **Sıradaki (bir sonraki oturum):**
-   - Lab'ı başlat: `cd lab && docker compose up -d` ve `lab/wazuh/wazuh.sh up -d` (VM yeniden başladıysa).
-     Not: Wazuh konteynerleri `restart: always`, lab `unless-stopped`; Docker açılışta başlıyorsa kendileri kalkar.
-   - Dashboard'a gir: https://127.0.0.1 (self-signed sertifika uyarısı beklenir), sağlık kontrolü.
-   - `wazuh-logtest` ile nginx satırının decoder'ını doğrula (`syslog` formatı doğru mu?).
-   - Uçtan uca test: 8080'e zararsız SQLi kalıplı istek → nginx log → Wazuh alarmı görülmeli.
-   - Bunlar geçince Faz 1 kapanır → Faz 2 (nmap keşif).
+Faz 2 — Keşif (nmap), çıktılar `Reconnaissance/`:
+1. Lab ayakta mı: `docker ps` (VM açılışında kendiliğinden kalkıyor; kalkmadıysa
+   `cd lab && docker compose up -d` ve `lab/wazuh/wazuh.sh up -d`).
+2. Taramadan önce hedef doğrulama: `docker network inspect` ile alt ağlar (SCOPE.md §4).
+3. Yalnızca kapsam içi hedefler: `127.0.0.1` (yayınlanan portlar) ve `172.30.10.0/24`, `172.30.20.0/24`.
+   Wazuh ağı (172.30.30.0/24) gözlemci; tarama hedefi değil.
+4. Beklenen keşif bulgusu: Juice Shop'a nginx'i atlayan doğrudan erişim (`172.30.10.10:3000`).
+5. nmap taramasının Wazuh'ta ne ürettiğine bak (nginx üzerinden geçen istekler alarm üretmeli).
+
+Lab erişimi: Juice Shop http://127.0.0.1:8080 · Wazuh dashboard https://127.0.0.1 (varsayılan kimlik bilgileri, kabul edilmiş risk)
 
 ---
 
@@ -25,7 +24,7 @@ Faz 1 — Lab kurulumu:
 | Faz | Konu | Çıktı klasörü | Durum |
 |---|---|---|---|
 | 0 | Planlama, iskelet, kapsam | kök dizin | Tamamlandı |
-| 1 | Lab kurulumu (Docker Compose: Juice Shop + nginx + Wazuh) | `lab/` (oluşturulacak) | Bekliyor |
+| 1 | Lab kurulumu (Docker Compose: Juice Shop + nginx + Wazuh) | `lab/` | Tamamlandı |
 | 2 | Keşif (nmap) | `Reconnaissance/` | Bekliyor |
 | 3 | Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine) | `Vulnerability-Analysis/`, `Findings/` | Bekliyor |
 | 4 | Wazuh tespit kuralları | `Detection/` | Bekliyor |
@@ -133,6 +132,50 @@ Faz 1 — Lab kurulumu:
 - Host'ta dinleyen tüm portlar `127.0.0.1` üzerinde: 443 (Wazuh dashboard), 8080 (nginx), 9050 (Tor) ve iki geçici port.
   9200 / 55000 / 1514 / 1515 host'ta **yok** ✅ (override çalışıyor).
 - **Henüz yapılmadı:** dashboard girişi, wazuh-logtest, nginx→Wazuh alarm testi.
+
+### 2026-11-23 — Faz 1: Wazuh doğrulama ve uçtan uca test
+**Yeniden başlatma testi:** VM kapatılıp açıldı → 5 konteyner kendiliğinden kalktı (restart politikaları çalışıyor),
+portlar yine yalnızca 127.0.0.1.
+
+**Sağlık kontrolleri (gerçekten yapıldı)**
+| Bileşen | Kontrol | Sonuç |
+|---|---|---|
+| Manager | `wazuh-control status` | analysisd, logcollector, remoted, apid, wazuh-db çalışıyor ✅ (cluster/mail/integrator vb. single-node'da kapalı, normal) |
+| Logcollector | `ossec.log` | `/var/log/nginx-lab/access.log` ve `error.log` izleniyor ✅ |
+| Indexer | `_cluster/health` | `green`, 1 node, shard %100 ✅ |
+| API | `POST /security/user/authenticate` | HTTP 200 ✅ |
+| Dashboard | `https://127.0.0.1/` | 302 → `/app/login` ✅ |
+| Filebeat → indexer | `filebeat test output` | TLSv1.2, `talk to server... OK` ✅ |
+
+Not: Kontrollerde parolalar komuta yazılmadı; konteynerlerin kendi ortam değişkenleri kullanıldı, token yazdırılmadı.
+
+**Decoder testi (`wazuh-logtest`, örnek satırlar)** — `syslog` log_format doğru; decoder `web-accesslog`
+| Örnek satır | Kural | Seviye | Açıklama |
+|---|---|---|---|
+| `GET /` 200 | 31108 | 0 | Ignored URLs (alarm yok) |
+| `...UNION SELECT...` 200 | 31106 | 6 | A web attack returned code 200 (success), MITRE T1190 |
+| `GET /admin.php` 404 | 31101 | 5 | Web server 400 error code |
+
+**Uçtan uca test** (2026-11-23 17:22:17 UTC, User-Agent işareti `wsa-faz1-e2e-122217`)
+- İstek: `GET http://127.0.0.1:8080/wsa-e2e-test?q=1'%20UNION%20SELECT%20null--` (var olmayan yol; veritabanına dokunmaz) → HTTP 200
+- nginx access.log: satır yazıldı ✅
+- Wazuh `alerts.json`: **kural 31106, seviye 6**, groups `web, accesslog, attack`, MITRE T1190,
+  srcip `172.30.20.1`, location `/var/log/nginx-lab/access.log`, ~1 sn içinde ✅
+- Indexer: ilk sorgu (8 sn sonra, `full_log:*e2e*`) 0 sonuç; ikinci sorgu (+15 sn, `rule.id:31106`) alarmı buldu ✅
+  (ilk sonucun nedeni Filebeat gecikmesi ya da joker sorgu biçimi olabilir; ayrıştırılmadı)
+- Dashboard (Threat Hunting → Events, `rule.id:31106`): alarm görüldü ✅
+  Kanıt: `Screenshots/2026-11-23_123811_faz1_wazuh-alarm-31106-e2e.png`
+  (data.url, full_log, decoder, rule 31106/6, MITRE T1190, PCI DSS 6.5/11.4, NIST SA.11/SI.4)
+- Dashboard kullanımında karşılaşılan sorun: zaman aralığı yanlışlıkla ters dönmüştü (başlangıç > bitiş) →
+  "No results"; takvim → "Last 24 hours" ile çözüldü. İlk ekran görüntüsü yalnızca görev çubuğunu yakaladı
+  (seçim sırasında Firefox önde değildi) → kullanılmadı, commit'lenmedi; `-d 5` gecikmeli tam ekran ile yeniden alındı.
+
+**Faz 1 sonucu: TAMAMLANDI.** Lab çalışıyor, izole, yeniden başlatmaya dayanıklı; saldırı → tespit zinciri doğrulandı.
+
+**Gözlem (Faz 4 için):** Kaynak IP her zaman `172.30.20.1` (edge ağının gateway'i = Kali). nginx'in arkasında
+gerçek istemci IP'si korunuyor ama Wazuh'ta tüm saldırılar aynı IP'den görünecek. Wazuh kuralı 31106 kalıp + HTTP 200
+birleşimine bakıyor; var olmayan bir yola atılan istek de SPA fallback yüzünden 200 döndüğü için "başarılı saldırı"
+olarak etiketlendi → **yanlış pozitif örneği**, Faz 4'te ele alınacak.
 
 **Öğrenilenler**
 - Compose override'da relative yollar ilk compose dosyasının klasörüne göre çözülür.
