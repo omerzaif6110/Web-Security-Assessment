@@ -23,6 +23,10 @@ services:
     volumes:
       - ../../../logs/nginx:/var/log/nginx-lab:ro
       - ../../wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+      # Faz 4: özel tespit kuralları (repodan, kalıcı). Yol ilk compose dosyasının
+      # (upstream/single-node/) klasörüne göre çözülür. Detection/ repo KÖKÜNDE
+      # (logs/ ise lab/ içinde) olduğu için bir seviye daha: ../../../../
+      - ../../../../Detection/rules/local_rules.xml:/var/ossec/etc/rules/local_rules.xml:ro
 
   wazuh.indexer:
     ports: !reset []

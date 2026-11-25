@@ -1,0 +1,41 @@
+<!--
+  Web-Security-Assessment — özel Wazuh tespit kuralları (Faz 4)
+  Kaynak: Faz 3 bulguları. Hazır Wazuh kuralı 31103 (SQLi) anahtar kelime
+  (select/union/where) aradığı için tırnak/boolean tabanlı SQLi'yi ve uygulamaya
+  özel saldırıları kaçırıyordu. Bu kurallar o boşlukları kapatır.
+
+  id aralığı 100100-100199 (yerel). if_sid 31100 = nginx access log temel kuralı.
+  NOT: nginx access log İSTEK GÖVDESİNİ görmez; gövde tabanlı saldırı (F-01 giriş
+  SQLi) bu yolla yakalanamaz — bkz. Detection/README.md "Kör noktalar".
+-->
+<group name="web,attack,wsa_custom,">
+
+  <!-- F-02: Ürün aramada tırnak/boolean tabanlı SQLi (31103'ün kaçırdığı).
+       Örn: /rest/products/search?q=test'  (loglanınca %27) -->
+  <rule id="100101" level="10">
+    <if_sid>31100,31108</if_sid>
+    <url type="pcre2">(?i)(%27|%22|%2727|%27%20?or|%20or%20|%20and%20|%27\)\)|--%20|%23|union(%20|\+)select)</url>
+    <description>WSA: SQL injection (tırnak/boolean kalıbı) - URL sorgu dizesinde</description>
+    <mitre><id>T1190</id></mitre>
+    <group>attack,sql_injection,pci_dss_6.5.1,</group>
+  </rule>
+
+  <!-- F-04: /ftp altında hassas uzantılara erişim (kdbx parola DB, yedekler, sırlar) -->
+  <rule id="100110" level="10">
+    <if_sid>31100,31108</if_sid>
+    <url type="pcre2">(?i)/ftp/.*\.(kdbx|bak|pyc|yml|key|pem|sqlite|db|conf|gg)(\?|%|$)</url>
+    <description>WSA: /ftp hassas dosya erişimi (parola DB / yedek / sır)</description>
+    <mitre><id>T1083</id><id>T1552.001</id></mitre>
+    <group>attack,sensitive_file,pci_dss_6.5,</group>
+  </rule>
+
+  <!-- F-05: Açık yönlendirme denemesi - /redirect?to= dış http(s) şema -->
+  <rule id="100120" level="8">
+    <if_sid>31100,31108</if_sid>
+    <url type="pcre2">(?i)/redirect\?to=https?(:|%3a)</url>
+    <description>WSA: Açık yönlendirme denemesi (/redirect?to= dış adres)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>attack,open_redirect,</group>
+  </rule>
+
+</group>

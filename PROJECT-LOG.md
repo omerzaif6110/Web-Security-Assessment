@@ -3,7 +3,7 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 3 ✅ tamamlandı (7 bulgu) → sıradaki Faz 4 (Wazuh tespit kuralları)
+- **Aktif faz:** Faz 4 ✅ tamamlandı (3 özel kural) → sıradaki Faz 5 (Wireshark)
 - **Son güncelleme:** 2026-11-25
 
 ## Bir sonraki adım
@@ -41,6 +41,23 @@ Faz 3'te ÖNEMLİ bulgu: saldırıların çoğu Wazuh'ta görünmedi çünkü ng
 - F-05 `/redirect?to=http...` dış şema → nginx logundan yakalanabilir
 - Tarama/frekans: aynı IP'den yüksek istek, 502 patlaması (R-04)
 ZAP daemon çalışıyor olabilir; gerekmiyorsa kapatılabilir (`pkill -f zap-2.17`).
+
+### 2026-11-25 — Faz 4: Wazuh özel tespit kuralları
+Ayrıntı: [Detection/README.md](Detection/README.md) · kurallar `Detection/rules/local_rules.xml`
+- ZAP kapatıldı (bellek boşaldı). Hazır 31103 SQLi kuralı anahtar kelime aradığı için tırnak/boolean
+  SQLi'yi kaçırıyordu; uygulamaya özel saldırıların hiç kuralı yoktu.
+- 3 özel kural (100101 SQLi, 100110 /ftp hassas dosya, 100120 açık yönlendirme). `<url type="pcre2">`
+  kullanıldı (`<field name="url">` hata veriyor); `if_sid>31100,31108` (basit GET'ler 31108'e düşüyor).
+- Kurallar repodan manager'a salt okunur mount edildi (override, kalıcı). Mount yolu repo kökü için
+  `../../../../` (Detection/ kökte, logs/ lab/ içinde — bir seviye fark).
+- Doğrulama: wazuh-logtest birim testi (doğru pozitif + normal istekte alarm yok) VE canlı uçtan uca
+  (3 saldırı → ~8 sn'de indexer'da 3 alarm). Kanıt README'de.
+- Dürüst kör nokta: F-01 giriş SQLi gövdede olduğu için access log'dan yakalanamıyor; gövde loglamak
+  parolaları da loglar (önerilmez). Faz 6 önleme konusu.
+
+**Sıradaki Faz 5 — Wireshark:** Faz 3/4 saldırı trafiğini yakala ve analiz et. Lab Docker köprüsünde
+(`br-...` 172.30.20.0/24 veya loopback) dinle. Çıktılar `Network-Analysis/` (ham pcap repoya girmez).
+İsteğe bağlı: Faz 4 alarmlarının dashboard ekran görüntüsü (kullanıcı; `rule.id:100101 100110 100120`).
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
