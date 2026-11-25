@@ -10,8 +10,14 @@
 Faz 3 — Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine), çıktılar `Vulnerability-Analysis/`, `Findings/`:
 1. ~~Bellek kararı~~ → artırıldı (`mem_limit 1536m`, heap 1 GB). **Ama sızıntı var:** bellek istek başına ~0,75 MB
    büyüyor; 1 GB heap ~3400 istekte (40 rps'de ~85 sn) doluyor ve uygulama yine çöküyor.
-   **Bekleyen karar:** Faz 3'te bununla nasıl çalışılacak (taramayı parçalara bölüp aralarda bellek takibi /
-   yeniden başlatma, ya da önce sızıntının kök nedenini araştırma). ZAP aktif taraması on binlerce istek atar.
+   **Karar (kullanıcı, 2026-11-25): bölerek tara.** Her tarama parçasından önce `docker restart juice-shop`
+   (bellek sıfırlanır), tarama sırasında bellek ve nginx 502 sayısı izlenir; çökme olursa o parça tekrarlanır.
+   Kök neden araştırması yapılmayacak (raporda "araştırılmadı" olarak belirtilir).
+   Hazırlık: ZAP 2.17.0 kuruldu (kullanıcı). ✅ Parça 1 (spider + pasif) tamam → `Vulnerability-Analysis/README.md`.
+   **Sıradaki:** SPA kapsamı (AJAX spider / API uç noktaları) → aktif tarama parçaları.
+   ZAP yeniden başlatma: `zaproxy -Xmx1024m -daemon -host 127.0.0.1 -port 8090 -config api.key=<yeni rastgele>
+   -config api.addrs.addr.name=127.0.0.1 -config api.addrs.addr.regex=false`, sonra context `juice` yeniden oluşturulmalı.
+   Not: Kullanıcı sudo parolasını paylaşmayı teklif etti; Claude parola girmez — sudo adımlarını kullanıcı yapar.
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
