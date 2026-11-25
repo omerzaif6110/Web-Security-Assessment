@@ -3,7 +3,7 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 3 — Zafiyet analizi (devam ediyor, 4/6-8 bulgu doğrulandı)
+- **Aktif faz:** Faz 3 ✅ tamamlandı (7 bulgu) → sıradaki Faz 4 (Wazuh tespit kuralları)
 - **Son güncelleme:** 2026-11-25
 
 ## Bir sonraki adım
@@ -29,8 +29,18 @@ Ayrıntı: [Vulnerability-Analysis/README.md](Vulnerability-Analysis/README.md) 
 - **Tespit boşluğu (Faz 4):** başarılı SQLi giriş atlatması (200) Wazuh'ta hiç alarm üretmedi; nginx logu
   istek gövdesini/Authorization başlığını görmüyor.
 
-**Sıradaki:** kalan adaylar (güvenlik başlıkları, CORS, açık yönlendirme, XSS, IDOR) → 6-8 bulguya tamamla.
-ZAP daemon hâlâ çalışıyor (yeni API anahtarı, context `juice`). Çalışmadıysa yeniden başlatma komutu yukarıda.
+**Faz 3 tamamlandı — 7 bulgu:** F-01 SQLi giriş (Kritik), F-02 arama SQLi (Yüksek), F-03 Feedbacks veri
+ifşası (Orta), F-04 /ftp KeePass (Yüksek), F-05 açık yönlendirme (Orta), F-06 CORS (Düşük),
+F-07 eksik güvenlik başlıkları (Orta). İncelenen ama ertelenen: XSS, IDOR (captcha/oturum gerektiriyor).
+
+## Faz 4 için hazır girdiler (tespit boşlukları)
+Faz 3'te ÖNEMLİ bulgu: saldırıların çoğu Wazuh'ta görünmedi çünkü nginx access log istek gövdesini,
+`Authorization` başlığını ve 2xx/3xx içindeki saldırıları göstermiyor. Faz 4 kural fikirleri:
+- F-01/F-02 SQLi kalıpları (gövdede) → uygulama logu entegrasyonu gerekebilir
+- F-04 `/ftp` hassas uzantılara erişim (kdbx, bak) → nginx logundan yakalanabilir
+- F-05 `/redirect?to=http...` dış şema → nginx logundan yakalanabilir
+- Tarama/frekans: aynı IP'den yüksek istek, 502 patlaması (R-04)
+ZAP daemon çalışıyor olabilir; gerekmiyorsa kapatılabilir (`pkill -f zap-2.17`).
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
