@@ -3,8 +3,8 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 2 ✅ tamamlandı → sıradaki Faz 3 (Zafiyet analizi)
-- **Son güncelleme:** 2026-11-23
+- **Aktif faz:** Faz 3 — Zafiyet analizi (devam ediyor, 4/6-8 bulgu doğrulandı)
+- **Son güncelleme:** 2026-11-25
 
 ## Bir sonraki adım
 Faz 3 — Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine), çıktılar `Vulnerability-Analysis/`, `Findings/`:
@@ -18,6 +18,19 @@ Faz 3 — Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine), çıktılar `Vuln
    ZAP yeniden başlatma: `zaproxy -Xmx1024m -daemon -host 127.0.0.1 -port 8090 -config api.key=<yeni rastgele>
    -config api.addrs.addr.name=127.0.0.1 -config api.addrs.addr.regex=false`, sonra context `juice` yeniden oluşturulmalı.
    Not: Kullanıcı sudo parolasını paylaşmayı teklif etti; Claude parola girmez — sudo adımlarını kullanıcı yapar.
+
+### 2026-11-25 — Faz 3: API yüzeyi + 4 bulgu doğrulandı
+Ayrıntı: [Vulnerability-Analysis/README.md](Vulnerability-Analysis/README.md) · bulgular `Findings/F-0X-*.md`
+- API keşfi: `main.js` içinden 51 uç nokta çıkarıldı (AJAX spider yerine statik JS analizi — bellek dostu).
+  ZAP ile durum haritası: 20 × 200 (kimlik doğrulamasız), 13 × 401 (korumalı), 18 × 500 (POST uç noktaları).
+- **Doğrulanan bulgular:** F-01 SQLi giriş atlatma (Kritik), F-02 aramada SQLi + hata ifşası (Yüksek),
+  F-03 /api/Feedbacks yetkisiz veri ifşası (Orta), F-04 /ftp KeePass dosyası (Yüksek).
+- Yıkıcı test yapılmadı: parola tablosu çekilmedi, kdbx açılmadı, dosyalar diske kaydedilmedi, token maskelendi.
+- **Tespit boşluğu (Faz 4):** başarılı SQLi giriş atlatması (200) Wazuh'ta hiç alarm üretmedi; nginx logu
+  istek gövdesini/Authorization başlığını görmüyor.
+
+**Sıradaki:** kalan adaylar (güvenlik başlıkları, CORS, açık yönlendirme, XSS, IDOR) → 6-8 bulguya tamamla.
+ZAP daemon hâlâ çalışıyor (yeni API anahtarı, context `juice`). Çalışmadıysa yeniden başlatma komutu yukarıda.
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
