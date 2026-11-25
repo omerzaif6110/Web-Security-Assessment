@@ -1,0 +1,4 @@
+# tshark analiz özeti
+tshark: TShark (Wireshark) 4.6.6.
+pcap: 98 paket, tcp 8080 (Kali->nginx) + 3000 (nginx->juice-shop)
+NOT: ham attack.pcap repoya EKLENMEZ (.gitignore *.pcap) - içinde kdbx dosya baytları ve JWT var.

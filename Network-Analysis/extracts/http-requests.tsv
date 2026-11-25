@@ -1,0 +1,11 @@
+t(s)	src	dport	metot	URI
+0.000129552	127.0.0.1	8080	GET	/rest/products/search?q=apple
+0.002404383	172.30.10.20	3000	GET	/rest/products/search?q=apple
+0.028893014	127.0.0.1	8080	POST	/rest/user/login
+0.030189276	172.30.10.20	3000	POST	/rest/user/login
+0.126233584	127.0.0.1	8080	GET	/rest/products/search?q=test%27
+0.126511683	172.30.10.20	3000	GET	/rest/products/search?q=test%27
+0.192743260	127.0.0.1	8080	GET	/ftp/incident-support.kdbx
+0.193346699	172.30.10.20	3000	GET	/ftp/incident-support.kdbx
+0.224244777	127.0.0.1	8080	GET	/redirect?to=https://github.com/juice-shop/juice-shop
+0.225023653	172.30.10.20	3000	GET	/redirect?to=https://github.com/juice-shop/juice-shop

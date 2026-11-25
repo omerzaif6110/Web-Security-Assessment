@@ -3,7 +3,7 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 4 ✅ tamamlandı (3 özel kural) → sıradaki Faz 5 (Wireshark)
+- **Aktif faz:** Faz 5 ✅ tamamlandı (trafik analizi) → sıradaki Faz 6 (Düzeltme + yeniden test)
 - **Son güncelleme:** 2026-11-25
 
 ## Bir sonraki adım
@@ -58,6 +58,21 @@ Ayrıntı: [Detection/README.md](Detection/README.md) · kurallar `Detection/rul
 **Sıradaki Faz 5 — Wireshark:** Faz 3/4 saldırı trafiğini yakala ve analiz et. Lab Docker köprüsünde
 (`br-...` 172.30.20.0/24 veya loopback) dinle. Çıktılar `Network-Analysis/` (ham pcap repoya girmez).
 İsteğe bağlı: Faz 4 alarmlarının dashboard ekran görüntüsü (kullanıcı; `rule.id:100101 100110 100120`).
+
+### 2026-11-25 — Faz 5: Ağ trafiği analizi (tshark)
+Ayrıntı: [Network-Analysis/README.md](Network-Analysis/README.md) · metin kanıtı `Network-Analysis/extracts/`
+- tshark ile yakalama (sudo'suz: dumpcap capability + wireshark grubu). `-i any`, tcp 8080+3000, 98 paket.
+- Saldırılar tekrarlandı; her biri iki bacakta görüldü (Kali→nginx:8080, nginx→juice-shop:3000).
+- **Ana sonuç:** giriş SQLi yükü (`{"email":"' OR 1=1--",...}`) paket gövdesinde açıkça görünüyor →
+  Faz 4'teki F-01 kör noktasını (access log gövdeyi görmez) paket görünürlüğü kapatıyor.
+- X-Forwarded-For=172.30.20.1 (nginx ekliyor) → Wazuh'ta tüm saldırıların tek IP'den görünmesinin nedeni.
+- kdbx (3246 B octet-stream) düz metin HTTP'de telden geçti (TLS yok → hassas veri şifresiz).
+- Ham pcap repoya girmez (.gitignore); kdbx baytları + JWT içerir. Yalnızca metin özetleri commit'lendi.
+
+**Sıradaki Faz 6 — Düzeltme + yeniden test:** nginx'te hızlı kazanımlar (güvenlik başlıkları F-07,
+/ftp engeli F-04, açık yönlendirme F-05, server_tokens F-? ); her düzeltmeden sonra yeniden test (önce/sonra).
+SQLi (F-01/F-02) kök nedeni uygulama kodunda → nginx hafifletme + kod önerisi. KARAR: hangi bulgular düzeltilecek
+(hepsi mi, öncelikli mi) kullanıcıyla konuşulacak.
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
