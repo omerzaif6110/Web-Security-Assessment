@@ -3,7 +3,7 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 6 ✅ tamamlandı (nginx düzeltmeleri) → sıradaki Faz 7 (Rapor/README/LinkedIn) — SON FAZ
+- **Aktif faz:** Faz 7 ✅ tamamlandı → **PROJE TAMAMLANDI** 🎉
 - **Son güncelleme:** 2026-11-26
 
 ## Bir sonraki adım
@@ -107,7 +107,7 @@ Lab erişimi: Juice Shop http://127.0.0.1:8080 · Wazuh dashboard https://127.0.
 | 4 | Wazuh tespit kuralları | `Detection/` | Bekliyor |
 | 5 | Wireshark trafik analizi | `Network-Analysis/` | Bekliyor |
 | 6 | Düzeltme ve yeniden test | `Remediation/` | Bekliyor |
-| 7 | PDF rapor, README, LinkedIn yazısı | kök dizin | Bekliyor |
+| 7 | PDF rapor, README, LinkedIn yazısı | Report/ | Tamamlandı |
 
 ## Kararlar
 | Tarih | Karar | Neden |
@@ -284,3 +284,16 @@ olarak etiketlendi → **yanlış pozitif örneği**, Faz 4'te ele alınacak.
 **Öğrenilenler**
 - Compose override'da relative yollar ilk compose dosyasının klasörüne göre çözülür.
 - Compose'da listeyi birleştirmek yerine değiştirmek için `!override`, boşaltmak için `!reset` etiketi kullanılır.
+
+### 2026-11-26 — Faz 7: Raporlama (SON FAZ) ✅
+- Report/report.html → Report/report.pdf (weasyprint): kapak, yönetici özeti, 7 bulgu, tespit,
+  düzeltme, sonuç. Yazar adı yer tutucu (kullanıcı doldurur); e-posta rapora konmadı.
+- README.md portföy için cilalandı: mimari, bulgu tablosu, yetkinlikler, metodoloji ilkeleri.
+- Report/linkedin-post.md: kısa + uzun iki sürüm taslağı.
+- **7 fazın tamamı bitti. Proje tamamlandı.**
+
+## Proje tamamlandı — olası ileri adımlar (isteğe bağlı)
+- Yazar adını rapora ekle, repoyu public yap (önce commit geçmişinde e-posta vb. gözden geçir).
+- TLS/HSTS ekle; SQLi için kod düzeyinde düzeltme + yeniden test (şu an nginx dışı).
+- Bellek sızıntısı (R-04) kök neden analizi. XSS/IDOR derinleştirme turu.
+- Faz 4 alarmlarının dashboard ekran görüntüleri (rapora görsel).

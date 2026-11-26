@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Web Güvenliği Değerlendirme Raporu</title>
+<style>
+  @page {
+    size: A4; margin: 2cm 1.8cm 2.2cm 1.8cm;
+    @bottom-center { content: "Sayfa " counter(page) " / " counter(pages); font-size: 8pt; color: #888; }
+    @bottom-left { content: "Web Security Assessment — OWASP Juice Shop Lab"; font-size: 8pt; color: #888; }
+  }
+  @page :first { @bottom-center { content: ""; } @bottom-left { content: ""; } }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #1f2933; margin: 0; }
+  h1,h2,h3 { color: #10243e; line-height: 1.25; }
+  h2 { border-bottom: 2px solid #2d6cdf; padding-bottom: 4px; margin-top: 1.4em; font-size: 15pt; }
+  h3 { font-size: 12pt; margin-top: 1.1em; }
+  a { color: #2d6cdf; text-decoration: none; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; background: #f1f4f8; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 0.6em 0; font-size: 9.5pt; }
+  th,td { border: 1px solid #cdd6e0; padding: 5px 7px; text-align: left; vertical-align: top; }
+  th { background: #10243e; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #f6f8fb; }
+  .cover { height: 25.5cm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+  .cover .kicker { color: #2d6cdf; font-weight: 700; letter-spacing: 2px; font-size: 11pt; }
+  .cover h1 { font-size: 30pt; margin: 10px 0 6px; border: none; }
+  .cover .sub { font-size: 14pt; color: #52606d; margin-bottom: 40px; }
+  .cover .meta { font-size: 10.5pt; color: #3e4c59; line-height: 1.9; border-top: 1px solid #cdd6e0; padding-top: 18px; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 8.5pt; font-weight: 700; color: #fff; }
+  .crit { background: #a4133c; } .high { background: #d65108; } .med { background: #c99700; } .low { background: #2a9d8f; } .info { background: #5f6c7b; }
+  .pill { font-size: 8.5pt; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+  .fixed { background: #d8f3dc; color: #1b4332; } .code-rec { background: #ffe8d6; color: #7f4f24; }
+  .note { background: #eef4ff; border-left: 4px solid #2d6cdf; padding: 8px 12px; margin: 10px 0; font-size: 9.5pt; }
+  .disclaimer { background: #fff4f4; border-left: 4px solid #a4133c; padding: 8px 12px; font-size: 9pt; }
+  .finding { page-break-inside: avoid; border: 1px solid #cdd6e0; border-radius: 6px; padding: 10px 14px; margin: 12px 0; }
+  .finding h3 { margin-top: 0; }
+  .kv { font-size: 9pt; color: #52606d; margin-bottom: 6px; }
+  ul { margin: 0.4em 0; padding-left: 1.2em; }
+  .toc a { color: #1f2933; }
+  .small { font-size: 9pt; color: #52606d; }
+</style>
+</head>
+<body>
+
+<!-- KAPAK -->
+<section class="cover">
+  <div class="kicker">GÜVENLİK DEĞERLENDİRME RAPORU</div>
+  <h1>Web Uygulaması<br>Güvenlik Değerlendirmesi</h1>
+  <div class="sub">OWASP Juice Shop · İzole Docker Lab · Saldırı → Tespit → Düzeltme</div>
+  <div class="meta">
+    <strong>Hazırlayan:</strong> ____________________ (Siber Güvenlik Öğrencisi)<br>
+    <strong>Depo:</strong> github.com/omerzaif6110/Web-Security-Assessment<br>
+    <strong>Tarih:</strong> 26 Kasım 2026<br>
+    <strong>Sürüm:</strong> 1.0<br>
+    <strong>Sınıflandırma:</strong> Eğitim / Portföy
+  </div>
+  <div class="disclaimer" style="margin-top:30px">
+    <strong>Yasal uyarı.</strong> Bu değerlendirme, yalnızca test edenin kendi kontrolündeki izole bir
+    laboratuvar ortamında, eğitim amacıyla yapılmıştır. Hedef uygulama (OWASP Juice Shop) kasıtlı olarak
+    zafiyetli bırakılmış, yasal bir eğitim projesidir. Burada anlatılan teknikleri izin alınmamış
+    sistemlere uygulamak yasa dışıdır.
+  </div>
+</section>
+
+<!-- İÇİNDEKİLER -->
+<h2>İçindekiler</h2>
+<div class="toc small">
+  1. Yönetici Özeti<br>
+  2. Kapsam ve Angajman Kuralları<br>
+  3. Metodoloji ve Lab Mimarisi<br>
+  4. Bulgu Özeti<br>
+  5. Ayrıntılı Bulgular (F-01 … F-07)<br>
+  6. Tespit Mühendisliği (Wazuh)<br>
+  7. Düzeltme ve Yeniden Test<br>
+  8. Sonuç ve Çıkarımlar<br>
+  Ek A. Ortam ve Araçlar
+</div>
+
+<!-- 1. YÖNETİCİ ÖZETİ -->
+<h2>1. Yönetici Özeti</h2>
+<p>
+Bu proje, tek bir Kali Linux sanal makinesi içinde Docker Compose ile kurulan izole bir laboratuvarda,
+bir web uygulamasına (OWASP Juice Shop) karşı uçtan uca bir güvenlik değerlendirmesi yürütür. Çalışma
+yalnızca saldırıyı değil, <strong>saldırı → tespit → trafik analizi → düzeltme → yeniden test</strong>
+döngüsünün tamamını kapsar; böylece hem saldırgan (kırmızı takım) hem savunmacı (mavi takım) bakış açısını
+birleştirir.
+</p>
+<p>
+Uygulama bir nginx ters vekil (reverse proxy) arkasında çalışır, trafiği bir Wazuh SIEM örneği izler. Değerlendirme
+sonucunda <strong>7 zafiyet</strong> elle doğrulandı. En kritik olanı, parola bilinmeden yönetici hesabına giriş
+sağlayan bir SQL enjeksiyonudur.
+</p>
+<table>
+  <tr><th>Önem</th><th>Adet</th><th>Bulgular</th></tr>
+  <tr><td><span class="badge crit">KRİTİK</span></td><td>1</td><td>F-01 SQLi ile kimlik doğrulama atlatma</td></tr>
+  <tr><td><span class="badge high">YÜKSEK</span></td><td>2</td><td>F-02 Aramada SQLi · F-04 Hassas dosya ifşası (KeePass)</td></tr>
+  <tr><td><span class="badge med">ORTA</span></td><td>3</td><td>F-03 Yetkisiz veri ifşası · F-05 Açık yönlendirme · F-07 Eksik güvenlik başlıkları</td></tr>
+  <tr><td><span class="badge low">DÜŞÜK</span></td><td>1</td><td>F-06 Gevşek CORS</td></tr>
+</table>
+<p>
+nginx katmanında temiz biçimde düzeltilebilen <strong>4 bulgu + sürüm ifşası düzeltildi ve yeniden test edildi</strong>;
+kök nedeni uygulama kodunda olan SQL enjeksiyonu ve yetkisiz erişim için kod düzeyinde düzeltme önerileri sunuldu.
+Ayrıca, saldırıların bir kısmının standart SIEM kurallarınca görülmediği tespit edilerek <strong>3 özel Wazuh kuralı</strong>
+yazıldı ve doğrulandı.
+</p>
+<div class="note">
+<strong>Öne çıkan metodoloji ilkesi.</strong> Bu değerlendirmede yalnızca gerçekten yürütülen testler belgelendi.
+Otomatik araç çıktıları körü körüne kabul edilmedi; yanlış pozitifler elle doğrulanarak ayıklandı ve tespit
+edilemeyen saldırılar dürüstçe "kör nokta" olarak raporlandı.
+</div>
+
+<!-- 2. KAPSAM -->
+<h2>2. Kapsam ve Angajman Kuralları</h2>
+<table>
+  <tr><th>Kapsam içi</th><th>Kapsam dışı</th></tr>
+  <tr>
+    <td>
+      OWASP Juice Shop (hedef)<br>
+      nginx ters vekil<br>
+      İzole Docker ağları: 172.30.10.0/24, 172.30.20.0/24<br>
+      Giriş noktası: http://127.0.0.1:8080
+    </td>
+    <td>
+      İnternetteki her IP / alan adı / servis<br>
+      LAN, yönlendirici, VM host makinesi<br>
+      Wazuh bileşenleri (yalnızca gözlemci)<br>
+      DoS / yük testi / kaynak tüketme
+    </td>
+  </tr>
+</table>
+<p class="small">
+Saldırı kaynağı yalnızca aynı Kali VM'dir. Hedef portlar yalnızca <code>127.0.0.1</code>'e bağlanmış, iç uygulama
+ağı internete çıkışsız (<code>internal: true</code>) yapılandırılmıştır; böylece lab dışına hiçbir trafik gitmez.
+Her tarama öncesinde hedeflerin lab ağına ait olduğu <code>docker network inspect</code> ile doğrulanmıştır.
+</p>
+
+<!-- 3. METODOLOJİ -->
+<h2>3. Metodoloji ve Lab Mimarisi</h2>
+<p>Değerlendirme yedi fazda yürütüldü:</p>
+<table>
+  <tr><th>Faz</th><th>İçerik</th><th>Başlıca araçlar</th></tr>
+  <tr><td>0–1</td><td>Planlama ve izole lab kurulumu</td><td>Docker Compose, nginx, Wazuh</td></tr>
+  <tr><td>2</td><td>Keşif (host/port/servis, içerik keşfi)</td><td>nmap, ffuf, curl</td></tr>
+  <tr><td>3</td><td>Zafiyet analizi (7 bulgu, elle doğrulama)</td><td>OWASP ZAP, Burp, elle test</td></tr>
+  <tr><td>4</td><td>Tespit mühendisliği (özel kurallar)</td><td>Wazuh (özel kurallar)</td></tr>
+  <tr><td>5</td><td>Ağ trafiği analizi</td><td>tshark / Wireshark</td></tr>
+  <tr><td>6</td><td>Düzeltme ve yeniden test</td><td>nginx sertleştirme</td></tr>
+  <tr><td>7</td><td>Raporlama</td><td>—</td></tr>
+</table>
+<p class="small">
+<strong>Mimari:</strong> Kali (saldırgan: nmap, ZAP, Wireshark) → <code>127.0.0.1:8080</code> → nginx ters vekil →
+Juice Shop (izole ağ). nginx erişim/hata logları Wazuh yöneticisine beslenir; Wazuh indexer ve panosu olayları
+toplar. Tüm bileşenler tek VM'de, yalnızca loopback'e bağlı.
+</p>
+
+<!-- 4. BULGU ÖZETİ -->
+<h2>4. Bulgu Özeti</h2>
+<table>
+  <tr><th>ID</th><th>Başlık</th><th>Önem</th><th>OWASP 2021</th><th>Wazuh tespiti</th><th>Düzeltme</th></tr>
+  <tr><td>F-01</td><td>SQLi ile kimlik doğrulama atlatma</td><td><span class="badge crit">KRİTİK</span></td><td>A03</td><td>✗ (gövde)</td><td><span class="pill code-rec">kod önerisi</span></td></tr>
+  <tr><td>F-02</td><td>Ürün aramada SQLi + hata ifşası</td><td><span class="badge high">YÜKSEK</span></td><td>A03</td><td>⚠ kısmi</td><td><span class="pill code-rec">kod önerisi</span></td></tr>
+  <tr><td>F-04</td><td>Hassas dosya ifşası (/ftp, KeePass)</td><td><span class="badge high">YÜKSEK</span></td><td>A01/A05</td><td>⚠ kısmi</td><td><span class="pill fixed">nginx ✓</span></td></tr>
+  <tr><td>F-03</td><td>Yetkisiz veri ifşası (/api/Feedbacks)</td><td><span class="badge med">ORTA</span></td><td>A01</td><td>✗</td><td><span class="pill code-rec">kod önerisi</span></td></tr>
+  <tr><td>F-05</td><td>Açık yönlendirme (izin listesi atlatma)</td><td><span class="badge med">ORTA</span></td><td>A01</td><td>✗</td><td><span class="pill fixed">nginx ✓</span></td></tr>
+  <tr><td>F-07</td><td>Eksik güvenlik başlıkları (CSP…)</td><td><span class="badge med">ORTA</span></td><td>A05</td><td>✗</td><td><span class="pill fixed">nginx ✓</span></td></tr>
+  <tr><td>F-06</td><td>Gevşek CORS (ACAO: *)</td><td><span class="badge low">DÜŞÜK</span></td><td>A05</td><td>✗</td><td><span class="pill fixed">nginx ✓</span></td></tr>
+</table>
+
+<!-- 5. AYRINTILI BULGULAR -->
+<h2>5. Ayrıntılı Bulgular</h2>
+
+<div class="finding">
+  <h3>F-01 · SQL Injection ile Kimlik Doğrulama Atlatma <span class="badge crit">KRİTİK</span></h3>
+  <div class="kv">A03:2021 Injection · CWE-89, CWE-287 · <code>POST /rest/user/login</code></div>
+  <p>Giriş uç noktası, <code>email</code> alanını doğrudan bir SQL sorgusuna yerleştirir. <code>' OR 1=1--</code>
+  yükü sorgu mantığını her zaman doğru yaparak <strong>parola bilinmeden</strong> ilk kullanıcıyla (yönetici)
+  oturum açar. Negatif test (yanlış parola) 401 verirken, yük geçerli bir JWT ve <code>admin@juice-sh.op</code>
+  döndürdü. <em>Etki:</em> tüm hesaplara tam erişim. <em>Düzeltme:</em> parametreli sorgu / ORM parametre bağlama.</p>
+</div>
+
+<div class="finding">
+  <h3>F-02 · Ürün Aramada SQL Injection + Ayrıntılı Hata İfşası <span class="badge high">YÜKSEK</span></h3>
+  <div class="kv">A03:2021 Injection · CWE-89, CWE-209 · <code>GET /rest/products/search?q=</code></div>
+  <p>Arama parametresi bir <code>LIKE '%...%'</code> cümlesine doğrudan girer. Tek tırnak eklendiğinde sunucu
+  tam hata mesajını döndürür: <code>SQLITE_ERROR: near "'%'": syntax error</code>. Bu hem enjeksiyonu kanıtlar
+  hem de veritabanı türünü/sorgu yapısını sızdırır. Sorumlu test gereği tüm kullanıcı tablosu çekilmedi.
+  <em>Düzeltme:</em> parametreli sorgu; üretimde ayrıntılı hataları kapat.</p>
+</div>
+
+<div class="finding">
+  <h3>F-04 · Hassas Dosya İfşası — /ftp (KeePass) <span class="badge high">YÜKSEK</span></h3>
+  <div class="kv">A01/A05:2021 · CWE-548, CWE-200 · <code>GET /ftp/</code></div>
+  <p><code>/ftp</code> dizini listelenebiliyor; içinde bir <strong>KeePass parola veritabanı</strong>
+  (<code>incident-support.kdbx</code>) ve yedek dosyalar kimlik doğrulamasız indirilebiliyor. Sunucu bazı
+  uzantıları (<code>.bak</code>, <code>.pyc</code>) engelliyor ama <code>.kdbx</code>'i engellemiyor — kara
+  liste yaklaşımının zayıflığı. Dosyalar diske kaydedilmedi, KeePass açılmaya çalışılmadı. <em>Düzeltme:</em>
+  dizin erişimini kaldır (uygulandı: nginx 403).</p>
+</div>
+
+<div class="finding">
+  <h3>F-03 · Kimlik Doğrulamasız Veri İfşası — /api/Feedbacks <span class="badge med">ORTA</span></h3>
+  <div class="kv">A01:2021 Broken Access Control · CWE-284, CWE-200 · <code>GET /api/Feedbacks</code></div>
+  <p>Uç nokta, kimlik doğrulaması olmadan tüm müşterilerin geri bildirimlerini (farklı <code>UserId</code>'ler,
+  kısmen maskeli e-postalar) döndürüyor. <code>/api/Users</code>, <code>/api/Cards</code> gibi uç noktalar doğru
+  biçimde 401 verirken bu uç nokta korumasız — erişim kontrolünün tutarsız uygulanması. <em>Düzeltme:</em> uç
+  noktaya erişim kontrolü; yanıttan kimlik alanlarını çıkar.</p>
+</div>
+
+<div class="finding">
+  <h3>F-05 · Açık Yönlendirme — İzin Listesi Atlatma <span class="badge med">ORTA</span></h3>
+  <div class="kv">A01:2021 · CWE-601 · <code>GET /redirect?to=</code></div>
+  <p>Yönlendirme hedefi "içinde geçiyor mu" (substring) mantığıyla denetleniyor. İzinli bir URL'yi parametre
+  olarak içeren dış adrese yönlendirme mümkün: <code>?to=https://example.com/x?p=https://github.com/juice-shop/juice-shop</code>
+  → saldırgan adresine 302. Kimlik avı için kötüye kullanılabilir. <em>Düzeltme:</em> tam-eşleşen izin listesi
+  (kod); nginx'te atlatma imzası engellendi.</p>
+</div>
+
+<div class="finding">
+  <h3>F-07 · Eksik Güvenlik Başlıkları <span class="badge med">ORTA</span></h3>
+  <div class="kv">A05:2021 Security Misconfiguration · CWE-693, CWE-1021</div>
+  <p>Content-Security-Policy, Referrer-Policy ve Permissions-Policy başlıkları yoktu (X-Frame-Options ve
+  X-Content-Type-Options mevcuttu). CSP eksikliği, olası bir XSS'in etkisini büyütür. <em>Düzeltme:</em> nginx'te
+  CSP + Referrer-Policy + Permissions-Policy eklendi; uygulamanın meşru kaynaklarına göre ayarlandı.</p>
+</div>
+
+<div class="finding">
+  <h3>F-06 · Gevşek CORS Yapılandırması <span class="badge low">DÜŞÜK</span></h3>
+  <div class="kv">A05:2021 · CWE-942 · uygulama geneli</div>
+  <p><code>Access-Control-Allow-Origin: *</code> her yanıtta mevcut. Ancak <code>Allow-Credentials</code> ayarlı
+  olmadığından kimlik bilgili saldırı mümkün değil — bu yüzden önem <strong>düşük</strong>. (Bulgu, olduğundan
+  büyük gösterilmedi.) <em>Düzeltme:</em> nginx'te başlık kaldırıldı (uygulama aynı kaynaktan sunulduğu için
+  CORS'a ihtiyacı yok).</p>
+</div>
+
+<!-- 6. TESPİT -->
+<h2>6. Tespit Mühendisliği (Wazuh)</h2>
+<p>
+Değerlendirmenin en öğretici sonuçlarından biri: saldırıların çoğu standart Wazuh kurallarınca <strong>görülmedi</strong>.
+İki neden: (1) hazır SQLi kuralı <code>select</code>/<code>union</code> gibi anahtar kelime arıyor, bizim tırnak/boolean
+tabanlı yüklerimizde bunlar yoktu; (2) uygulamaya özel saldırıların (<code>/ftp/*.kdbx</code>, <code>/redirect</code>)
+hazır karşılığı yoktu. Bu boşlukları kapatmak için 3 özel kural yazıldı:
+</p>
+<table>
+  <tr><th>Kural</th><th>Seviye</th><th>Yakaladığı</th><th>Bulgu</th></tr>
+  <tr><td>100101</td><td>10</td><td>URL'de tırnak/boolean SQLi</td><td>F-02</td></tr>
+  <tr><td>100110</td><td>10</td><td>/ftp hassas uzantı erişimi</td><td>F-04</td></tr>
+  <tr><td>100120</td><td>8</td><td>Açık yönlendirme denemesi</td><td>F-05</td></tr>
+</table>
+<p>Kurallar hem birim testi (<code>wazuh-logtest</code>) hem canlı uçtan uca test ile doğrulandı; normal
+isteklerde yanlış pozitif üretmedi.</p>
+<div class="note">
+<strong>Dürüst kör nokta.</strong> F-01 giriş SQLi'si istek <em>gövdesinde</em> taşınır; nginx erişim logu gövdeyi
+görmez ve başarılı atlatma 200 döner. Bu nedenle erişim logu tabanlı kurallarla yakalanamaz. Faz 5'te paket
+yakalama (tshark) ile yükün (<code>{"email":"' OR 1=1--" …}</code>) telde açıkça görüldüğü gösterilerek bu kör
+nokta somutlandı — farklı görünürlük katmanlarının neden gerektiğinin kanıtı.
+</div>
+
+<!-- 7. DÜZELTME -->
+<h2>7. Düzeltme ve Yeniden Test</h2>
+<p>Düzeltmeler nginx ters vekil katmanında uygulandı ve her biri önce/sonra test edildi:</p>
+<table>
+  <tr><th>Bulgu</th><th>Önce</th><th>Sonra</th></tr>
+  <tr><td>F-04 /ftp</td><td>200 (kdbx indirilebiliyor)</td><td>403</td></tr>
+  <tr><td>F-05 açık yönlendirme</td><td>atlatma → 302 dış adres</td><td>atlatma → 403 (meşru redirect korundu)</td></tr>
+  <tr><td>F-06 CORS</td><td>ACAO: *</td><td>başlık kaldırıldı</td></tr>
+  <tr><td>F-07 başlıklar</td><td>CSP/Referrer/Permissions yok</td><td>üçü de eklendi</td></tr>
+  <tr><td>R-07 sürüm</td><td>Server: nginx/1.30.7</td><td>Server: nginx</td></tr>
+</table>
+<p>
+Uygulama işlevi korundu (SPA tarayıcıda tam yüklendi; CSP, uygulamanın gerçekten kullandığı kaynaklara göre
+ayarlandı). <strong>Savunma derinliği</strong> gösterildi: nginx artık saldırıları engellese de (403), Wazuh
+kuralları denemeleri hâlâ tespit ediyor — saldırgan hem durduruluyor hem loglanıyor.
+</p>
+<p class="small">SQL enjeksiyonu ve yetkisiz erişimin kök nedeni uygulama kodundadır; bunlar için nginx'te kaba
+kalıp engelleme yerine kod düzeyinde düzeltme önerilmiştir (parametreli sorgular, uç nokta erişim kontrolü).</p>
+
+<!-- 8. SONUÇ -->
+<h2>8. Sonuç ve Çıkarımlar</h2>
+<ul>
+  <li>Uygulama, kimlik doğrulamasını tamamen atlatan <strong>kritik bir SQL enjeksiyonu</strong> dahil 7 doğrulanmış
+      zafiyet içeriyordu. nginx katmanında 5 düzeltme uygulanıp yeniden test edildi; gerisi için kod önerisi verildi.</li>
+  <li><strong>Araç ≠ gerçek:</strong> Otomatik tarayıcılar yanlış pozitif (açık proxy uyarısı) ve eksik sonuç
+      (uygulama çökerken kaçırılan yollar) üretti; bunlar elle doğrulamayla düzeltildi.</li>
+  <li><strong>Tek görünürlük katmanı yetmez:</strong> Erişim logu, gövde tabanlı saldırıyı göremedi; paket yakalama
+      gördü. Olgun bir tespit, birden çok katman gerektirir.</li>
+  <li><strong>Önleme + tespit birlikte:</strong> Engelleme (nginx) ve tespit (Wazuh) aynı anda çalışarak savunma
+      derinliği sağladı.</li>
+</ul>
+<p>Gelecek çalışma: TLS/HSTS eklenmesi, SQL enjeksiyonu için kod düzeyinde düzeltme ve yeniden test, bellek
+sızıntısının (keşifte bulunan erişilebilirlik sorunu) kök neden analizi.</p>
+
+<!-- EK -->
+<h2>Ek A. Ortam ve Araçlar</h2>
+<p class="small">
+Kali Linux (tek VM) · Docker Compose · OWASP Juice Shop v20.4.0 · nginx 1.30.7 · Wazuh 4.14.10 (single-node) ·
+nmap 7.99 · OWASP ZAP 2.17.0 · Burp Suite · ffuf 2.1.0 · tshark/Wireshark. Tüm ham çıktılar, kurallar ve
+önce/sonra kanıtları depo içinde fazlara göre düzenlenmiştir (Reconnaissance/, Vulnerability-Analysis/,
+Findings/, Detection/, Network-Analysis/, Remediation/).
+</p>
+
+</body>
+</html>
