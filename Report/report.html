@@ -311,6 +311,13 @@ yok. Bu boşlukları kapatmak için kendi 3 kuralımı yazdım:
 isteklerde yanlış pozitif üretmedi.</p>
 <figure><img src="img/term-3-detect.png" alt="Wazuh özel kural tetiklenmesi">
 <figcaption>Şekil 5. Özel kural 100101, SQLi içeren nginx log satırında tetikleniyor (wazuh-logtest).</figcaption></figure>
+
+<figure><img src="img/wazuh-events.png" alt="Wazuh panosu özel kural alarmları">
+<figcaption>Şekil 6. Wazuh panosu (Threat Hunting) — yazdığım 3 kural canlı çalışırken: 100101 (SQLi, sev 10),
+100110 (/ftp hassas dosya, sev 10), 100120 (açık yönlendirme, sev 8).</figcaption></figure>
+
+<figure><img src="img/wazuh-detail.png" alt="Wazuh alarm detayı">
+<figcaption>Şekil 7. Tek bir alarmın detayı: kural 100101, MITRE T1190, <code>data.url</code> ve ham log satırı.</figcaption></figure>
 <p>
 Burada açıkça söylemem gereken bir sınır var: F-01 giriş SQLi'sini bu kurallarla yakalayamıyorum. Çünkü yük
 istek <em>gövdesinde</em> gidiyor, nginx erişim logu ise gövdeyi görmüyor; üstelik başarılı giriş 200 dönüyor,
@@ -335,7 +342,7 @@ ayarlandı). <strong>Savunma derinliği</strong> gösterildi: nginx artık sald�
 kuralları denemeleri hâlâ tespit ediyor — saldırgan hem durduruluyor hem loglanıyor.
 </p>
 <figure><img src="img/term-4-remediate.png" alt="Düzeltme önce/sonra terminal çıktısı">
-<figcaption>Şekil 6. nginx düzeltmeleri — her bulgu için önce (kırmızı) / sonra (yeşil) karşılaştırması.</figcaption></figure>
+<figcaption>Şekil 8. nginx düzeltmeleri — her bulgu için önce (kırmızı) / sonra (yeşil) karşılaştırması.</figcaption></figure>
 <p class="small">SQL enjeksiyonu ve yetkisiz erişimin kök nedeni uygulama kodundadır; bunlar için nginx'te kaba
 kalıp engelleme yerine kod düzeyinde düzeltme önerilmiştir (parametreli sorgular, uç nokta erişim kontrolü).</p>
 
