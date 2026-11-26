@@ -85,16 +85,15 @@
 <!-- 1. YÖNETİCİ ÖZETİ -->
 <h2>1. Yönetici Özeti</h2>
 <p>
-Bu proje, tek bir Kali Linux sanal makinesi içinde Docker Compose ile kurulan izole bir laboratuvarda,
-bir web uygulamasına (OWASP Juice Shop) karşı uçtan uca bir güvenlik değerlendirmesi yürütür. Çalışma
-yalnızca saldırıyı değil, <strong>saldırı → tespit → trafik analizi → düzeltme → yeniden test</strong>
-döngüsünün tamamını kapsar; böylece hem saldırgan (kırmızı takım) hem savunmacı (mavi takım) bakış açısını
-birleştirir.
+Bu projede, kendi kurduğum izole bir lab ortamında OWASP Juice Shop uygulamasına uçtan uca bir güvenlik
+değerlendirmesi yaptım. Amacım sadece açık bulmak değildi; bir saldırının baştan sona nasıl ilerlediğini
+görmek istedim: saldırı, sonra bunu SIEM'de yakalama, trafiği inceleme, açığı kapatma ve tekrar test etme.
+Böylece işin hem saldırgan hem savunmacı tarafını aynı projede deneyimledim.
 </p>
 <p>
-Uygulama bir nginx ters vekil (reverse proxy) arkasında çalışır, trafiği bir Wazuh SIEM örneği izler. Değerlendirme
-sonucunda <strong>7 zafiyet</strong> elle doğrulandı. En kritik olanı, parola bilinmeden yönetici hesabına giriş
-sağlayan bir SQL enjeksiyonudur.
+Hedef uygulamayı bir nginx ters vekil arkasına koydum, trafiği de Wazuh ile izledim. Sonuçta <strong>7 zafiyet</strong>
+buldum ve hepsini elle doğruladım. En ciddisi, parolayı hiç bilmeden yönetici hesabına girmemi sağlayan bir
+SQL enjeksiyonu.
 </p>
 <table>
   <tr><th>Önem</th><th>Adet</th><th>Bulgular</th></tr>
@@ -109,11 +108,12 @@ kök nedeni uygulama kodunda olan SQL enjeksiyonu ve yetkisiz erişim için kod 
 Ayrıca, saldırıların bir kısmının standart SIEM kurallarınca görülmediği tespit edilerek <strong>3 özel Wazuh kuralı</strong>
 yazıldı ve doğrulandı.
 </p>
-<div class="note">
-<strong>Öne çıkan metodoloji ilkesi.</strong> Bu değerlendirmede yalnızca gerçekten yürütülen testler belgelendi.
-Otomatik araç çıktıları körü körüne kabul edilmedi; yanlış pozitifler elle doğrulanarak ayıklandı ve tespit
-edilemeyen saldırılar dürüstçe "kör nokta" olarak raporlandı.
-</div>
+<p>
+Rapor boyunca kendime koyduğum bir kural vardı: sadece gerçekten yaptığım testleri yazdım. Araçların söylediğine
+olduğu gibi güvenmedim, yanlış alarmları tek tek elle kontrol edip ayıkladım. Yakalayamadığım saldırıları da
+"bunu göremedim" diye açıkça yazdım, çünkü bence bir raporu değerli yapan neyi bulduğun kadar neyi bulamadığını
+da bilmen.
+</p>
 
 <!-- 2. KAPSAM -->
 <h2>2. Kapsam ve Angajman Kuralları</h2>
@@ -142,7 +142,7 @@ Her tarama öncesinde hedeflerin lab ağına ait olduğu <code>docker network in
 
 <!-- 3. METODOLOJİ -->
 <h2>3. Metodoloji ve Lab Mimarisi</h2>
-<p>Değerlendirme yedi fazda yürütüldü:</p>
+<p>Değerlendirmeyi yedi fazda yürüttüm:</p>
 <table>
   <tr><th>Faz</th><th>İçerik</th><th>Başlıca araçlar</th></tr>
   <tr><td>0–1</td><td>Planlama ve izole lab kurulumu</td><td>Docker Compose, nginx, Wazuh</td></tr>
@@ -295,10 +295,11 @@ toplar. Tüm bileşenler tek VM'de, yalnızca loopback'e bağlı.
 <!-- 6. TESPİT -->
 <h2>6. Tespit Mühendisliği (Wazuh)</h2>
 <p>
-Değerlendirmenin en öğretici sonuçlarından biri: saldırıların çoğu standart Wazuh kurallarınca <strong>görülmedi</strong>.
-İki neden: (1) hazır SQLi kuralı <code>select</code>/<code>union</code> gibi anahtar kelime arıyor, bizim tırnak/boolean
-tabanlı yüklerimizde bunlar yoktu; (2) uygulamaya özel saldırıların (<code>/ftp/*.kdbx</code>, <code>/redirect</code>)
-hazır karşılığı yoktu. Bu boşlukları kapatmak için 3 özel kural yazıldı:
+Bu faz benim için en öğretici kısım oldu: saldırılarımın çoğunu Wazuh hazır kurallarıyla <strong>görmedim</strong>.
+Sebebini araştırınca iki şey çıktı. Birincisi, hazır SQLi kuralı <code>select</code>, <code>union</code> gibi
+anahtar kelimeler arıyor; benim <code>test'</code> ya da <code>' OR 1=1--</code> gibi yüklerimde bu kelimeler yoktu.
+İkincisi, uygulamaya özel saldırıların (<code>/ftp/*.kdbx</code>, <code>/redirect</code>) zaten hazır bir karşılığı
+yok. Bu boşlukları kapatmak için kendi 3 kuralımı yazdım:
 </p>
 <table>
   <tr><th>Kural</th><th>Seviye</th><th>Yakaladığı</th><th>Bulgu</th></tr>
@@ -310,16 +311,16 @@ hazır karşılığı yoktu. Bu boşlukları kapatmak için 3 özel kural yazıl
 isteklerde yanlış pozitif üretmedi.</p>
 <figure><img src="img/term-3-detect.png" alt="Wazuh özel kural tetiklenmesi">
 <figcaption>Şekil 5. Özel kural 100101, SQLi içeren nginx log satırında tetikleniyor (wazuh-logtest).</figcaption></figure>
-<div class="note">
-<strong>Dürüst kör nokta.</strong> F-01 giriş SQLi'si istek <em>gövdesinde</em> taşınır; nginx erişim logu gövdeyi
-görmez ve başarılı atlatma 200 döner. Bu nedenle erişim logu tabanlı kurallarla yakalanamaz. Faz 5'te paket
-yakalama (tshark) ile yükün (<code>{"email":"' OR 1=1--" …}</code>) telde açıkça görüldüğü gösterilerek bu kör
-nokta somutlandı — farklı görünürlük katmanlarının neden gerektiğinin kanıtı.
-</div>
+<p>
+Burada açıkça söylemem gereken bir sınır var: F-01 giriş SQLi'sini bu kurallarla yakalayamıyorum. Çünkü yük
+istek <em>gövdesinde</em> gidiyor, nginx erişim logu ise gövdeyi görmüyor; üstelik başarılı giriş 200 dönüyor,
+yani normal bir girişten farkı yok. Bunu Faz 5'te paket yakalayarak gösterdim: yükün (<code>' OR 1=1--</code>)
+telde açıkça göründüğünü yakaladım. Yani bu saldırı için access log yetmiyor, farklı bir görünürlük katmanı gerekiyor.
+</p>
 
 <!-- 7. DÜZELTME -->
 <h2>7. Düzeltme ve Yeniden Test</h2>
-<p>Düzeltmeler nginx ters vekil katmanında uygulandı ve her biri önce/sonra test edildi:</p>
+<p>Düzeltmeleri nginx katmanında yaptım ve her birini önce/sonra test ettim:</p>
 <table>
   <tr><th>Bulgu</th><th>Önce</th><th>Sonra</th></tr>
   <tr><td>F-04 /ftp</td><td>200 (kdbx indirilebiliyor)</td><td>403</td></tr>
@@ -340,18 +341,17 @@ kalıp engelleme yerine kod düzeyinde düzeltme önerilmiştir (parametreli sor
 
 <!-- 8. SONUÇ -->
 <h2>8. Sonuç ve Çıkarımlar</h2>
+<p>Bu projeden çıkardığım birkaç şey:</p>
 <ul>
-  <li>Uygulama, kimlik doğrulamasını tamamen atlatan <strong>kritik bir SQL enjeksiyonu</strong> dahil 7 doğrulanmış
-      zafiyet içeriyordu. nginx katmanında 5 düzeltme uygulanıp yeniden test edildi; gerisi için kod önerisi verildi.</li>
-  <li><strong>Araç ≠ gerçek:</strong> Otomatik tarayıcılar yanlış pozitif (açık proxy uyarısı) ve eksik sonuç
-      (uygulama çökerken kaçırılan yollar) üretti; bunlar elle doğrulamayla düzeltildi.</li>
-  <li><strong>Tek görünürlük katmanı yetmez:</strong> Erişim logu, gövde tabanlı saldırıyı göremedi; paket yakalama
-      gördü. Olgun bir tespit, birden çok katman gerektirir.</li>
-  <li><strong>Önleme + tespit birlikte:</strong> Engelleme (nginx) ve tespit (Wazuh) aynı anda çalışarak savunma
-      derinliği sağladı.</li>
+  <li>Uygulamada, girişi tamamen atlatan kritik bir SQL enjeksiyonu dahil 7 açık buldum. Bunlardan nginx'te
+      düzeltebildiğim 5 tanesini kapatıp tekrar test ettim; kök nedeni kodda olanlar için de nasıl düzeltileceğini yazdım.</li>
+  <li>Araçlara körü körüne güvenilmeyeceğini gördüm. Otomatik tarayıcılar hem yanlış alarm (açık proxy uyarısı)
+      hem de eksik sonuç (uygulama çökerken kaçan yollar) verdi; bunları elle doğrulayarak düzelttim.</li>
+  <li>Tek bir log kaynağının yetmediğini fark ettim. Access log bir saldırıyı hiç göremedi ama paket yakalama gördü.</li>
+  <li>Engelleme ile tespitin birlikte çalışması gerektiğini gördüm: nginx saldırıyı durdururken Wazuh aynı anda loglamaya devam etti.</li>
 </ul>
-<p>Gelecek çalışma: TLS/HSTS eklenmesi, SQL enjeksiyonu için kod düzeyinde düzeltme ve yeniden test, bellek
-sızıntısının (keşifte bulunan erişilebilirlik sorunu) kök neden analizi.</p>
+<p>İleride yapmak istediklerim: TLS/HSTS eklemek, SQL enjeksiyonunu kod tarafında düzeltip tekrar test etmek ve
+keşifte denk geldiğim bellek sızıntısının nedenini araştırmak.</p>
 
 <!-- EK -->
 <h2>Ek A. Ortam ve Araçlar</h2>

@@ -74,6 +74,3 @@ Ayrıntı: [lab/README.md](lab/README.md)
 ## Yasal uyarı
 Bu proje yalnızca kişinin kendi kontrolündeki izole bir lab ortamında, eğitim ve portföy amacıyla
 yapılmıştır. Anlatılan teknikleri izin alınmamış sistemlere uygulamak yasa dışıdır.
-
----
-<sub>🤖 Değerlendirme ve dokümantasyon, Claude Code eşliğinde yürütülmüştür.</sub>
