@@ -208,6 +208,9 @@ toplar. Tüm bileşenler tek VM'de, yalnızca loopback'e bağlı.
 <figcaption>Şekil 2. Hedef uygulama (OWASP Juice Shop) <code>http://127.0.0.1:8080</code> üzerinde çalışırken.</figcaption>
 </figure>
 
+<figure><img src="img/term-1-recon.png" alt="nmap keşif terminal çıktısı">
+<figcaption>Şekil 3. Faz 2 keşif — nmap ile servis/sürüm tespiti (gerçek çıktı).</figcaption></figure>
+
 <!-- 4. BULGU ÖZETİ -->
 <h2>4. Bulgu Özeti</h2>
 <table>
@@ -231,14 +234,8 @@ toplar. Tüm bileşenler tek VM'de, yalnızca loopback'e bağlı.
   yükü sorgu mantığını her zaman doğru yaparak <strong>parola bilinmeden</strong> ilk kullanıcıyla (yönetici)
   oturum açar. Negatif test (yanlış parola) 401 verirken, yük geçerli bir JWT ve <code>admin@juice-sh.op</code>
   döndürdü. <em>Etki:</em> tüm hesaplara tam erişim. <em>Düzeltme:</em> parametreli sorgu / ORM parametre bağlama.</p>
-  <div class="term"><span class="c"># 1) yanlış parola → reddediliyor</span>
-<span class="p">$</span> curl -X POST .../rest/user/login -d '{"email":"test@x.com","password":"<span class="r">yanlis</span>"}'
-<span class="r">HTTP 401 Unauthorized</span>
-
-<span class="c"># 2) SQLi yükü → parolasız giriş</span>
-<span class="p">$</span> curl -X POST .../rest/user/login -d '{"email":"<span class="g">'"'"' OR 1=1--</span>","password":"x"}'
-<span class="g">HTTP 200 OK</span>
-  "authentication": { "umail": "<span class="g">admin@juice-sh.op</span>", "token": "eyJ0eXAi…<span class="m">[maskelendi]</span>" }</div>
+  <figure><img src="img/term-2-sqli.png" alt="SQLi giriş atlatma terminal çıktısı">
+  <figcaption>Şekil 4. F-01 canlı: yanlış parola 401 verirken <code>' OR 1=1--</code> yükü parolasız admin girişi sağlıyor.</figcaption></figure>
 </div>
 
 <div class="finding">
@@ -311,10 +308,8 @@ hazır karşılığı yoktu. Bu boşlukları kapatmak için 3 özel kural yazıl
 </table>
 <p>Kurallar hem birim testi (<code>wazuh-logtest</code>) hem canlı uçtan uca test ile doğrulandı; normal
 isteklerde yanlış pozitif üretmedi.</p>
-<div class="term"><span class="c"># canlı saldırı → Wazuh indexer'da özel kural alarmları (~8 sn)</span>
-<span class="g">kural 100101</span> (sev 10)  SQL injection (tırnak/boolean)   url: /rest/products/search?q=test<span class="r">%27</span>
-<span class="g">kural 100110</span> (sev 10)  /ftp hassas dosya erişimi        url: /ftp/<span class="r">incident-support.kdbx</span>
-<span class="g">kural 100120</span> (sev 8)   Açık yönlendirme denemesi        url: /redirect?to=<span class="r">https://…</span></div>
+<figure><img src="img/term-3-detect.png" alt="Wazuh özel kural tetiklenmesi">
+<figcaption>Şekil 5. Özel kural 100101, SQLi içeren nginx log satırında tetikleniyor (wazuh-logtest).</figcaption></figure>
 <div class="note">
 <strong>Dürüst kör nokta.</strong> F-01 giriş SQLi'si istek <em>gövdesinde</em> taşınır; nginx erişim logu gövdeyi
 görmez ve başarılı atlatma 200 döner. Bu nedenle erişim logu tabanlı kurallarla yakalanamaz. Faz 5'te paket
@@ -338,12 +333,8 @@ Uygulama işlevi korundu (SPA tarayıcıda tam yüklendi; CSP, uygulamanın ger�
 ayarlandı). <strong>Savunma derinliği</strong> gösterildi: nginx artık saldırıları engellese de (403), Wazuh
 kuralları denemeleri hâlâ tespit ediyor — saldırgan hem durduruluyor hem loglanıyor.
 </p>
-<div class="term"><span class="c"># düzeltme öncesi / sonrası</span>
-/ftp/incident-support.kdbx    <span class="r">ÖNCE: 200</span>  →  <span class="g">SONRA: 403</span>
-açık yönlendirme (atlatma)     <span class="r">ÖNCE: 302 dış adres</span>  →  <span class="g">SONRA: 403</span>
-Access-Control-Allow-Origin    <span class="r">ÖNCE: *</span>  →  <span class="g">SONRA: (kaldırıldı)</span>
-Content-Security-Policy        <span class="r">ÖNCE: yok</span>  →  <span class="g">SONRA: eklendi</span>
-Server                         <span class="r">ÖNCE: nginx/1.30.7</span>  →  <span class="g">SONRA: nginx</span></div>
+<figure><img src="img/term-4-remediate.png" alt="Düzeltme önce/sonra terminal çıktısı">
+<figcaption>Şekil 6. nginx düzeltmeleri — her bulgu için önce (kırmızı) / sonra (yeşil) karşılaştırması.</figcaption></figure>
 <p class="small">SQL enjeksiyonu ve yetkisiz erişimin kök nedeni uygulama kodundadır; bunlar için nginx'te kaba
 kalıp engelleme yerine kod düzeyinde düzeltme önerilmiştir (parametreli sorgular, uç nokta erişim kontrolü).</p>
 
