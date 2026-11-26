@@ -30,7 +30,7 @@ Yalnızca bu lab ve izole Docker ağı. Dışarıya hiçbir tarama yapılmaz. De
 | 3 | Zafiyet analizi (ZAP/Burp) | [Vulnerability-Analysis](Vulnerability-Analysis/) · [Findings](Findings/) | ✅ |
 | 4 | Wazuh tespit kuralları | [Detection](Detection/) | ✅ |
 | 5 | Wireshark analizi | [Network-Analysis](Network-Analysis/) | ✅ |
-| 6 | Düzeltme ve yeniden test | [Remediation](Remediation/) | ⚪ |
+| 6 | Düzeltme ve yeniden test | [Remediation](Remediation/) | ✅ |
 | 7 | Rapor | — | ⚪ |
 
 ## Bulgular

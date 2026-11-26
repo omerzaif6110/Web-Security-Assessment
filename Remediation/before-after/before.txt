@@ -1,0 +1,16 @@
+=== ÖNCE (baseline) ===
+## F-07 güvenlik başlıkları + sürüm:
+Server: nginx/1.30.7
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Feature-Policy: payment 'self'
+## F-06 CORS:
+Access-Control-Allow-Origin: *
+## F-04 /ftp dizin + kdbx:
+/ftp/ -> HTTP 200
+/ftp/incident-support.kdbx -> HTTP 200
+## F-05 açık yönlendirme atlatma:
+bypass -> HTTP 302, Location=https://example.com/acme?pwn=https://github.com/juice-shop/juice-shop
+## normal işlev (bozulmamalı):
+ana sayfa -> HTTP 200
+arama -> HTTP 200

@@ -3,8 +3,8 @@
 > Yeni bir oturuma başlarken **önce bu dosyayı oku.** En üstte "Şu anki durum" ve "Bir sonraki adım" var.
 
 ## Şu anki durum
-- **Aktif faz:** Faz 5 ✅ tamamlandı (trafik analizi) → sıradaki Faz 6 (Düzeltme + yeniden test)
-- **Son güncelleme:** 2026-11-25
+- **Aktif faz:** Faz 6 ✅ tamamlandı (nginx düzeltmeleri) → sıradaki Faz 7 (Rapor/README/LinkedIn) — SON FAZ
+- **Son güncelleme:** 2026-11-26
 
 ## Bir sonraki adım
 Faz 3 — Zafiyet analizi (ZAP/Burp, 6-8 bulgu derinlemesine), çıktılar `Vulnerability-Analysis/`, `Findings/`:
@@ -73,6 +73,20 @@ Ayrıntı: [Network-Analysis/README.md](Network-Analysis/README.md) · metin kan
 /ftp engeli F-04, açık yönlendirme F-05, server_tokens F-? ); her düzeltmeden sonra yeniden test (önce/sonra).
 SQLi (F-01/F-02) kök nedeni uygulama kodunda → nginx hafifletme + kod önerisi. KARAR: hangi bulgular düzeltilecek
 (hepsi mi, öncelikli mi) kullanıcıyla konuşulacak.
+
+### 2026-11-26 — Faz 6: Düzeltme ve yeniden test
+Ayrıntı: [Remediation/README.md](Remediation/README.md) · önce/sonra `Remediation/before-after/`
+- Karar (kullanıcı): nginx'te temiz düzeltmeler. nginx config sertleştirildi (`lab/nginx/default.conf`).
+- Düzeltilen + yeniden test edilen: F-04 (/ftp→403), F-05 (açık yönlendirme atlatma→403, meşru redirect korundu),
+  F-06 (ACAO:* kaldırıldı), F-07 (CSP+Referrer+Permissions eklendi), R-07 (server_tokens off).
+- Normal işlev korundu (ana sayfa/arama 200, SPA tarayıcıda tam yüklendi — browser paneli + konsol doğrulaması).
+  CSP ilk başta Google Fonts'u engelledi → meşru kaynak eklendi (iyi CSP meşru ihtiyaçlara izin verir).
+- Savunma derinliği kanıtlandı: engellenen (403) saldırılar Faz 4 Wazuh kurallarını HÂLÂ tetikliyor
+  (önleme + tespit birlikte).
+- Düzeltilmeyen (kök neden kodda, öneri olarak belgelendi): F-01/F-02 SQLi, F-03 yetkisiz erişim.
+
+**Sıradaki Faz 7 — SON FAZ (Rapor):** tüm fazları toplayan PDF/yönetici özeti rapor, README cilalama,
+LinkedIn yazısı. Bütün ham veri ve kanıt repoda hazır. Lab çalışır durumda.
 2. Faz 2 adayları: R-02 `/ftp` hassas dosyalar, R-03 ayrıntılı hatalar, R-05 CORS, R-06 PUT/DELETE,
    `/redirect` (açık yönlendirme), `/rest/*` ve `/api/*` (SQLi, IDOR, auth), + ZAP/Burp ile bulunacaklar.
 3. Her bulgu `Findings/F-XX-*.md`: açıklama, adımlar, kanıt (ekran görüntüsü), etki, OWASP Top 10, Wazuh tespit
